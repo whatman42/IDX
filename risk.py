@@ -674,7 +674,7 @@ class OperationalStateMachine:
                 pass
             return self._current_state
 
-    def close((self) -> None:
+    def close(self) -> None:
         with self._lock:
             try:
                 self._db_conn.close()

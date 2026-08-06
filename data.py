@@ -49,10 +49,10 @@ RUN_ID: str = datetime.datetime.now(WIB_TZ).strftime("%Y%m%d-%H%M%S")
 IS_CI_ENV: bool = os.getenv("GITHUB_ACTIONS") == "true" or os.getenv("CI") == "true"
 
 # Fast Parallel Settings for both Local and CI Environments
-DEFAULT_MAX_WORKERS: int = 10
+DEFAULT_MAX_WORKERS: int = 8
 DEFAULT_BATCH_SIZE: int = 5 if IS_CI_ENV else 10
-INTER_BATCH_DELAY_SEC: float = 0.2 if IS_CI_ENV else 0.1
-FETCH_TIMEOUT_SEC: float = float(os.getenv("IDX_FETCH_TIMEOUT_SEC", "20.0"))
+INTER_BATCH_DELAY_SEC: float = 0.3 if IS_CI_ENV else 0.1
+FETCH_TIMEOUT_SEC: float = float(os.getenv("IDX_FETCH_TIMEOUT_SEC", "15.0"))
 
 IDX_FEE_ROUNDTRIP_PCT: float = 0.003             # 0.3% Average Roundtrip Transaction Fee
 IDX_MIN_PRICE_IDR: float = 50.0                  # IDX Regular Board Floor Price (Rp 50)

@@ -1,0 +1,264 @@
+# ==============================================================================
+# GitHub Actions Workflow: IDX Stock Analysis Engine & Signal Pipeline
+# File: .github/workflows/idx_analysis_pipeline.yml
+# Compliance: Indonesia Stock Exchange (IDX) Quantitative Pipeline (v2026)
+# ==============================================================================
+name: IDX Stock Analysis & Signal Generator Workflow
+
+on:
+  # 1. Cron Job: Sesuai Jam Kerja Bursa Efek Indonesia (IDX)
+  # Senin - Jumat, Pukul 08:30 WIB (01:30 UTC) dan 16:15 WIB (09:15 UTC)
+  schedule:
+    - cron: '30 1 * * 1-5'
+    - cron: '15 9 * * 1-5'
+
+  # 2. Eksekusi Manual
+  workflow_dispatch:
+    inputs:
+      run_mode:
+        description: "Pilih Mode Eksekusi Pipeline"
+        required: true
+        default: 'dry_run'
+        type: choice
+        options:
+          - dry_run
+          - self_learning
+          - health_check
+          - reset
+
+# [AUDIT FIX #4] Concurrency Group Tunggal Global untuk Mencegah Race Condition DB
+concurrency:
+  group: idx-production-global-lock
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+env:
+  TZ: "Asia/Jakarta"
+  PYTHONUNBUFFERED: "1"
+  CI: "true"
+
+jobs:
+  run-idx-pipeline:
+    runs-on: ubuntu-latest
+    # [AUDIT FIX #6] Timeout Mencegah Job Hang Selamanya
+    timeout-minutes: 30
+
+    steps:
+      # ------------------------------------------------------------------------
+      # 1. Checkout Repository
+      # ------------------------------------------------------------------------
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      # ------------------------------------------------------------------------
+      # 2. Setup Python Environment
+      # ------------------------------------------------------------------------
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      # ------------------------------------------------------------------------
+      # 3. Cache Local Data & Models (Strict Cache Key Alignment)
+      # ------------------------------------------------------------------------
+      # [AUDIT FIX #5] Cache Key Komprehensif Berdasarkan Dependencies & Config
+      - name: Restore Local Data Cache
+        uses: actions/cache@v4
+        with:
+          path: .cache/
+          key: idx-cache-${{ runner.os }}-${{ hashFiles('requirements.txt') }}-${{ hashFiles('universe.json') }}
+          restore-keys: |
+            idx-cache-${{ runner.os }}-${{ hashFiles('requirements.txt') }}-
+            idx-cache-${{ runner.os }}-
+
+      # ------------------------------------------------------------------------
+      # 4. Install Dependencies
+      # ------------------------------------------------------------------------
+      - name: Install Dependencies
+        run: |
+          set -Eeuo pipefail
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then
+            pip install -r requirements.txt
+          fi
+          # Install sqlite3 CLI tool untuk audit integritas DB
+          sudo apt-get update -y && sudo apt-get install -y sqlite3
+
+      # ------------------------------------------------------------------------
+      # 5. Prepare Output Directories & Git Keep Files
+      # ------------------------------------------------------------------------
+      - name: Prepare Directories & Placeholders
+        run: |
+          set -Eeuo pipefail
+          mkdir -p .cache/corporate_actions reports logs data storage models
+          touch reports/.gitkeep logs/.gitkeep data/.gitkeep storage/.gitkeep models/.gitkeep .cache/.gitkeep
+
+      # ------------------------------------------------------------------------
+      # 6. Validate Required Dependencies
+      # ------------------------------------------------------------------------
+      # [AUDIT FIX #3] Jangan buat dummy universe.json. Hentikan pipeline jika file missing.
+      - name: Validate Strict Dependencies
+        run: |
+          set -Eeuo pipefail
+          if [ ! -f "universe.json" ]; then
+            echo "❌ CRITICAL ERROR: universe.json tidak ditemukan!"
+            echo "Sistem menolak membuat dummy universe.json untuk mencegah kerusakan pipeline."
+            exit 1
+          fi
+          echo "✔ Dependency Check Passed: universe.json ditemukan."
+
+      # ------------------------------------------------------------------------
+      # 7. Run IDX Analysis Pipeline
+      # ------------------------------------------------------------------------
+      # [AUDIT FIX #10] Shell strict mode + Retry Mechanism untuk Network Resilience
+      - name: Run IDX Stock Analysis Engine
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          IDX_PROXY_URL: ${{ secrets.IDX_PROXY_URL }}
+          IDX_FETCH_TIMEOUT_SEC: "25.0"
+        run: |
+          set -Eeuo pipefail
+
+          MODE="${{ github.event.inputs.run_mode }}"
+          if [ -z "$MODE" ]; then
+            MODE="dry_run"
+          fi
+
+          echo "🚀 Running Pipeline in Mode: $MODE"
+
+          # [AUDIT FIX #7] Fungsi Retry dengan Exponential Backoff untuk Mencegah Failure Akibat Timeout API
+          run_with_retry() {
+            local cmd="$1"
+            local max_attempts=3
+            local attempt=1
+            local timeout=10
+
+            until $cmd; do
+              if [ $attempt -ge $max_attempts ]; then
+                echo "❌ Command '$cmd' gagal setelah $max_attempts percobaan."
+                return 1
+              fi
+              echo "⚠️ Percobaan $attempt gagal. Coba lagi dalam $timeout detik..."
+              sleep $timeout
+              attempt=$((attempt + 1))
+              timeout=$((timeout * 2))
+            done
+          }
+
+          if [ "$MODE" = "reset" ]; then
+            echo "🔄 RESET SIMULATION CAPITAL & PORTFOLIO STATE"
+            python main.py --reset-dryrun
+          elif [ "$MODE" = "self_learning" ]; then
+            echo "🧠 SELF LEARNING MODEL RETRAINING"
+            run_with_retry "python main.py --self-learning-update"
+          elif [ "$MODE" = "health_check" ]; then
+            echo "🩺 SYSTEM HEALTH & NETWORK EGRESS CHECK"
+            # [AUDIT FIX #13] Menjalankan pemeriksaan kesehatan komprehensif
+            python monitoring.py
+          else
+            echo "🧪 DRY RUN & SIGNAL GENERATION PIPELINE"
+            run_with_retry "python main.py --dry-run"
+          fi
+
+      # ------------------------------------------------------------------------
+      # 8. SQLite Checkpoint & Integrity Validation
+      # ------------------------------------------------------------------------
+      # [AUDIT FIX #2 & #11] Menggabungkan WAL ke main DB & Validasi Integritas SQLite
+      - name: Checkpoint & Validate SQLite Databases
+        run: |
+          set -Eeuo pipefail
+          echo "🔍 Checking SQLite Database Integrity & Flushing WAL..."
+          
+          find . \( -name "*.db" -o -name "*.sqlite" \) | while read -r db_file; do
+            echo "Processing DB: $db_file"
+            
+            # Flush WAL and truncate log files cleanly
+            sqlite3 "$db_file" "PRAGMA wal_checkpoint(TRUNCATE);" || true
+            
+            # Audit Integrity
+            CHECK_RESULT=$(sqlite3 "$db_file" "PRAGMA integrity_check;")
+            if [ "$CHECK_RESULT" != "ok" ]; then
+              echo "❌ CRITICAL: Database $db_file CORRUPTED! Integrity Check: $CHECK_RESULT"
+              exit 1
+            fi
+            echo "✔ Database $db_file OK."
+          done
+
+      # ------------------------------------------------------------------------
+      # 9. Atomic Git Commit & Self-Healing Rebase/Push
+      # ------------------------------------------------------------------------
+      # [AUDIT FIX #1, #2, #12] Safe Whitelisted Staging + Retry Loop pada Git Push
+      - name: Commit & Push Updated Files
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          # Synchronize dengan remote branch
+          git fetch origin main
+          git pull --rebase origin main || {
+            echo "⚠️ Rebase conflict encountered. Resetting..."
+            git rebase --abort || true
+            git stash
+            git pull --rebase origin main
+            git stash pop || true
+          }
+
+          # [AUDIT FIX #12] Whitelist Staging - Hanya Stage Berkas Output yang Valid
+          git add -f universe.json 2>/dev/null || true
+          git add portfolio_*.json checkpoint*.json 2>/dev/null || true
+          git add reports/*.md reports/*.csv 2>/dev/null || true
+          git add logs/*.log 2>/dev/null || true
+          git add models/*.joblib storage/*.json 2>/dev/null || true
+
+          # [AUDIT FIX #2] Stage SQLite files beserta WAL & SHM jika ada
+          find . \( -name "*.db" -o -name "*.sqlite" -o -name "*.db-wal" -o -name "*.db-shm" \) -print0 | xargs -0 -r git add -f
+
+          # Cek perubahan staged
+          if git diff --cached --quiet; then
+            echo "✔ Tidak ada perubahan state/database untuk di-commit."
+            exit 0
+          fi
+
+          git commit -m "chrono(bot): auto-update IDX signals, SQLite db, models, and portfolio state [skip ci]"
+
+          # [AUDIT FIX #1] Safe Push Loop dengan Auto Rebase-Retry jika terjadi Race Condition saat Push
+          MAX_PUSH_ATTEMPTS=3
+          PUSH_ATTEMPT=1
+          
+          until git push origin HEAD; do
+            if [ $PUSH_ATTEMPT -ge $MAX_PUSH_ATTEMPTS ]; then
+              echo "❌ Failed to push commits after $MAX_PUSH_ATTEMPTS attempts."
+              exit 1
+            fi
+            echo "⚠️ Push rejected (non-fast-forward). Re-syncing with remote..."
+            sleep 3
+            git pull --rebase origin main
+            PUSH_ATTEMPT=$((PUSH_ATTEMPT + 1))
+          done
+
+          echo "🎉 Commit & Push Berhasil Tersimpan di Remote Repository!"
+
+      # ------------------------------------------------------------------------
+      # 10. Upload Safe Diagnostics Artifacts on Failure
+      # ------------------------------------------------------------------------
+      # [AUDIT FIX #9] Whitelist Artifact Upload untuk Mencegah Kebocoran Secret / Config JSON
+      - name: Upload Telemetry Logs on Failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: idx-execution-failure-logs
+          retention-days: 14
+          path: |
+            logs/*.log
+            reports/*.md
+            reports/*.csv

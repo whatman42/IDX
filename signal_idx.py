@@ -29,11 +29,11 @@ IDX_SPREAD_SLIPPAGE_PCT: Final[float] = 0.0015       # Estimasi friction spread 
 IDX_TOTAL_FRICTION_PCT: Final[float] = IDX_FEE_ROUNDTRIP_PCT + IDX_SPREAD_SLIPPAGE_PCT
 
 IDX_MIN_PRICE_IDR: Final[float] = 50.0              # Batas minimum harga saham BEI (Rp 50)
-IDX_MIN_NOTIONAL_IDR: Final[float] = 50_000.0        # Batas minimum nilai transaksi IDR (Rp 50.000)
+IDX_MIN_NOTIONAL_IDR: Final[float] = 5_000.0        # Batas minimum nilai transaksi IDR (Rp 5.000)
 
 # OPTIMIZED: Menurunkan batas ADTV harian agar saham berpotensi tidak langsung terbuang
-IDX_DEFAULT_MIN_24H_VOLUME_IDR: Final[float] = 250_000_000.0 # Standard ADTV Threshold (Rp 250 Juta)
-IDX_DRYRUN_MIN_24H_VOLUME_IDR: Final[float] = 50_000_000.0    # Dry-Run ADTV Threshold (Rp 50 Juta)
+IDX_DEFAULT_MIN_24H_VOLUME_IDR: Final[float] = 1_000_000.0 # Standard ADTV Threshold (Rp 1 Juta)
+IDX_DRYRUN_MIN_24H_VOLUME_IDR: Final[float] = 1_000_000.0    # Dry-Run ADTV Threshold (Rp 1 Juta)
 
 IDX_MAX_STALENESS_SEC: Final[float] = 43200.0       # Batas usia data candlestick (12 Jam)
 IDX_BASE_OVERNIGHT_GAP_PCT: Final[float] = 0.08    # Batas toleransi gap overnight 8%

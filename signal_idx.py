@@ -35,7 +35,7 @@ IDX_MIN_NOTIONAL_IDR: Final[float] = 5_000.0        # Batas minimum nilai transa
 IDX_DEFAULT_MIN_24H_VOLUME_IDR: Final[float] = 1_000_000.0 # Standard ADTV Threshold (Rp 1 Juta)
 IDX_DRYRUN_MIN_24H_VOLUME_IDR: Final[float] = 1_000_000.0    # Dry-Run ADTV Threshold (Rp 1 Juta)
 
-IDX_MAX_STALENESS_SEC: Final[float] = 86400.0       # Batas usia data candlestick (12 Jam)
+IDX_MAX_STALENESS_SEC: Final[float] = 172800.0       # Batas usia data candlestick (48 Jam)
 IDX_BASE_OVERNIGHT_GAP_PCT: Final[float] = 0.08    # Batas toleransi gap overnight 8%
 IDX_LOT_SIZE: Final[int] = 100                      # Satuan perdagangan standar BEI (1 Lot = 100 Lembar)
 

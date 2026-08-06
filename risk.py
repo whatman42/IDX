@@ -54,9 +54,9 @@ except ImportError:
 # =============================================================================
 IDX_FEE_ROUNDTRIP_PCT: float = 0.003
 IDX_MIN_PRICE_IDR: float = 50.0
-IDX_MIN_NOTIONAL_IDR: float = 50_000.0
-IDX_MIN_24H_VOLUME_IDR: float = 1_000_000_000.0
-IDX_MAX_STALENESS_SEC: float = 43200.0
+IDX_MIN_NOTIONAL_IDR: float = 5_000.0
+IDX_MIN_24H_VOLUME_IDR: float = 1_000_000.0
+IDX_MAX_STALENESS_SEC: float = 86400.0
 IDX_DEFAULT_STP_MODE: str = "EXPIRE_MAKER"
 
 # =============================================================================

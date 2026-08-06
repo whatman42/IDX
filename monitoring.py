@@ -93,7 +93,7 @@ def _ensure_polars_df_monitoring(data: Any, default_cols: Optional[List[str]] = 
 # ============================================================================
 # IDX LOCKED CONSTANTS & BOUNDARIES
 # ============================================================================
-IDX_MAX_STALENESS_SEC: float = 43200.0  # Batas maksimal usia data candle harian saham (12 Jam)
+IDX_MAX_STALENESS_SEC: float = 172800.0  # Batas maksimal usia data candle harian saham (48 Jam)
 TOKOCRYPTO_MAX_STALENESS_SEC: float = IDX_MAX_STALENESS_SEC  # Compatibility Alias
 
 def _resolve_default_network_targets() -> List[Tuple[str, int]]:

@@ -320,7 +320,7 @@ class IDXCacheManager:
             finally:
                 self._evict_cache_files(temp_target, temp_meta)
 
-    def prune_cache((self) -> None:
+    def prune_cache(self) -> None:
         """Automated LRU Cache Pruning by Age and Size ceiling."""
         try:
             files = list(self._cache_dir.glob("*.parquet"))

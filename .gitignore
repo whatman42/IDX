@@ -1,0 +1,57 @@
+# ==============================================================================
+# Git Ignore Rule: IDX Stock Analysis Engine
+# Compliance: Python Quantitative & Machine Learning Pipeline
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# 1. Byte-compiled / Optimized / DLL Files
+# ------------------------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# ------------------------------------------------------------------------------
+# 2. Virtual Environments & IDE
+# ------------------------------------------------------------------------------
+.venv/
+venv/
+ENV/
+env/
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# ------------------------------------------------------------------------------
+# 3. Local Caches & Temporary Operational Files
+# ------------------------------------------------------------------------------
+.cache/
+.pytest_cache/
+.mypy_cache/
+*.log
+*.tmp
+
+# ------------------------------------------------------------------------------
+# 4. OS Specific Files
+# ------------------------------------------------------------------------------
+.DS_Store
+Thumbs.db
+
+# ------------------------------------------------------------------------------
+# 5. UN-IGNORE RULES (PENTING: File/Folder yang WAJIB Masuk Git Tracking)
+# ------------------------------------------------------------------------------
+# Memastikan berkas universe.json TIDAK di-ignore
+!universe.json
+
+# Memastikan file placeholder .gitkeep di folder output tetap di-commit
+!.gitkeep
+!reports/.gitkeep
+!logs/.gitkeep
+!data/.gitkeep
+!storage/.gitkeep
+!models/.gitkeep
+
+# Memastikan berkas JSON state/portfolio tetap masuk tracking
+!portfolio_*.json
+!checkpoint*.json

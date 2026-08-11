@@ -32,6 +32,7 @@ lightgbm>=4.1.0
 xgboost>=2.0.0
 catboost>=1.2.0
 joblib>=1.3.0
+google-genai>=0.1.0
 
 # ------------------------------------------------------------------------------
 # 5. System Telemetry, Monitoring & Cryptographic Utilities

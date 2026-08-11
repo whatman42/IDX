@@ -996,7 +996,7 @@ class PortfolioOptimizer:
             
             raw_views_list.append(exp_ret)
             conf_list.append(_extract_float(r, ["prediction_confidence", "confidence"], default=0.50))
-            prices_list.append(_extract_float(r, ["entry_price", "close", "price", "last_price"], default1000.0))
+            prices_list.append(_extract_float(r, ["entry_price", "close", "price", "last_price"], default=1000.0))
 
         mu_views = np.array(raw_views_list, dtype=np.float64)
         conf_vec = np.array(conf_list, dtype=np.float64)

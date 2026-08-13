@@ -26,9 +26,12 @@ import polars as pl
 # Standar Zona Waktu Pasar Saham Indonesia (WIB)
 WIB_TZ = ZoneInfo("Asia/Jakarta")
 
-# Model Baseline Gemini SDK
-PRIMARY_MODEL: str = "gemini-2.5-flash"
-FALLBACK_MODEL: str = "gemini-2.0-flash"
+# ==============================================================================
+# MODEL BASELINE GEMINI SDK (SERAGAM DENGAN MAIN.PY & SYSTEM-WIDE)
+# ==============================================================================
+PRIMARY_MODEL: str = "gemini-3.6-flash"
+FALLBACK_MODEL: str = "gemini-3.5-flash-lite"
+
 
 # Import Google GenAI Client
 try:

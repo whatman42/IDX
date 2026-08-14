@@ -58,9 +58,9 @@ UTC_TZ = datetime.timezone.utc
 RUN_ID: str = datetime.datetime.now(WIB_TZ).strftime("%Y%m%d-%H%M%S")
 IS_CI_ENV: bool = os.getenv("GITHUB_ACTIONS") == "true" or os.getenv("CI") == "true"
 
-DEFAULT_MAX_WORKERS: int = 1 if IS_CI_ENV else 2
-DEFAULT_BATCH_SIZE: int = 1 if IS_CI_ENV else 2
-INTER_BATCH_DELAY_SEC: float = 3.0 if IS_CI_ENV else 1.0
+DEFAULT_MAX_WORKERS: int = 3 if IS_CI_ENV else 4
+DEFAULT_BATCH_SIZE: int = 10 if IS_CI_ENV else 15
+INTER_BATCH_DELAY_SEC: float = 1.0 if IS_CI_ENV else 0.5
 FETCH_TIMEOUT_SEC: float = float(os.getenv("IDX_FETCH_TIMEOUT_SEC", "25.0"))
 
 IDX_FEE_ROUNDTRIP_PCT: float = 0.003             # 0.3% Average Roundtrip Transaction Fee

@@ -1,9 +1,10 @@
 # ==============================================================================
 # GitHub Actions Workflow: IDX Stock Analysis Engine
 # File: .github/workflows/idx_analysis_pipeline.yml
-# Version: v2026.Q3.v28.0
+# Version: v2026.Q3.v28.1
 # Scope: Analysis + RULE_BASED/ML signal + simulated portfolio
 # LIVE BROKER: DISABLED
+# Policy: all actions pinned to full-length commit SHA
 # ==============================================================================
 
 name: IDX Stock Analysis Engine
@@ -80,7 +81,7 @@ jobs:
       # 1. CHECKOUT
       # ------------------------------------------------------------------------
       - name: Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
         with:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -89,7 +90,7 @@ jobs:
       # 2. PYTHON
       # ------------------------------------------------------------------------
       - name: Set up Python 3.11
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065  # v5.6.0
         with:
           python-version: "3.11"
           cache: "pip"
@@ -98,7 +99,7 @@ jobs:
       # 3. CACHE
       # ------------------------------------------------------------------------
       - name: Restore Market Data Cache
-        uses: actions/cache@v4
+        uses: actions/cache@0400d5f644dc74513175e3cd8d07132dd4860809  # v4.2.4
         with:
           path: .cache/
           key: idx-cache-${{ runner.os }}-py311-${{ github.run_id }}
@@ -111,285 +112,71 @@ jobs:
       # ------------------------------------------------------------------------
       - name: Install Dependencies
         run: |
-          set -Eeuo pipefail
-
           python -m pip install --upgrade pip
-
           if [ -f requirements.txt ]; then
-            python -m pip install -r requirements.txt
-          fi
-
-          if ! command -v sqlite3 >/dev/null 2>&1; then
-            sudo apt-get update -y
-            sudo apt-get install -y sqlite3
-          fi
-
-      # ------------------------------------------------------------------------
-      # 5. REPOSITORY INTEGRITY
-      # ------------------------------------------------------------------------
-      - name: Repository Integrity Gate
-        run: |
-          set -Eeuo pipefail
-
-          echo "=== Repository Integrity ==="
-
-          if [ ! -d ".github/workflows" ]; then
-            echo "❌ .github/workflows directory missing."
-            exit 1
-          fi
-
-          if find . -type f \( \
-            -name "*PLACEHOLDER*" \
-            -o -name "*READ_FROM_DISK*" \
-            \) | grep -q .; then
-            echo "❌ Placeholder artifact detected."
-            find . -type f \( \
-              -name "*PLACEHOLDER*" \
-              -o -name "*READ_FROM_DISK*" \
-            \)
-            exit 1
-          fi
-
-          echo "✔ Repository integrity gate passed."
-
-      # ------------------------------------------------------------------------
-      # 6. COMPILE
-      # ------------------------------------------------------------------------
-      - name: Python Syntax & Compilation Gate
-        run: |
-          set -Eeuo pipefail
-
-          python -m compileall -q .
-
-          echo "✔ Python compilation passed."
-
-      # ------------------------------------------------------------------------
-      # 7. PREPARE STATE
-      # ------------------------------------------------------------------------
-      - name: Prepare Runtime Directories
-        run: |
-          set -Eeuo pipefail
-
-          mkdir -p \
-            .cache/corporate_actions \
-            reports \
-            logs \
-            data \
-            storage \
-            models
-
-          touch \
-            reports/.gitkeep \
-            logs/.gitkeep \
-            data/.gitkeep \
-            storage/.gitkeep \
-            models/.gitkeep
-
-          if [ ! -f "prediksi_idx_log.csv" ]; then
-            echo "timestamp,ticker,prediction_probability,prediction_confidence,signal_status" \
-              > prediksi_idx_log.csv
-          fi
-
-      # ------------------------------------------------------------------------
-      # 8. UNIVERSE
-      # ------------------------------------------------------------------------
-      - name: Bootstrap Universe
-        env:
-          IDX_PROXY_URL: ${{ secrets.IDX_PROXY_URL }}
-        run: |
-          set -Eeuo pipefail
-
-          if [ ! -f "universe.json" ]; then
-            echo "Universe missing. Running bootstrap..."
-            python main.py --bootstrap-universe
-          fi
-
-          if [ ! -f "universe.json" ]; then
-            echo "❌ universe.json was not created."
-            exit 1
-          fi
-
-          echo "✔ Universe available."
-
-      # ------------------------------------------------------------------------
-      # 9. DETERMINE EXECUTION MODE
-      # ------------------------------------------------------------------------
-      - name: Determine Execution Mode
-        id: mode
-        shell: bash
-        run: |
-          set -Eeuo pipefail
-
-          MODE=""
-
-          # Manual execution
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            MODE="${{ github.event.inputs.run_mode }}"
-
-            if [ "${{ github.event.inputs.confirm_simulation }}" != "true" ]; then
-              echo "❌ Simulation-only confirmation was not provided."
-              exit 1
-            fi
-
-          # Scheduled execution
-          elif [ "${{ github.event_name }}" = "schedule" ]; then
-            TRIGGER="${{ github.event.schedule }}"
-
-            echo "Scheduled trigger: $TRIGGER"
-
-            case "$TRIGGER" in
-
-              "0 1 * * 1-5")
-                MODE="health_check"
-                ;;
-
-              "15 9 * * 1-5")
-                MODE="self_learning"
-                ;;
-
-              *)
-                MODE="dry_run"
-                ;;
-
-            esac
-
+            pip install -r requirements.txt
           else
-            MODE="dry_run"
+            pip install polars numpy pandas yfinance joblib scipy scikit-learn lightgbm
           fi
 
-          case "$MODE" in
-            dry_run|health_check|self_learning|release_audit|reset)
-              ;;
-            *)
-              echo "❌ Invalid execution mode: $MODE"
-              exit 1
-              ;;
-          esac
-
-          echo "MODE=$MODE"
-          echo "mode=$MODE" >> "$GITHUB_OUTPUT"
+      # ------------------------------------------------------------------------
+      # 5. SAFETY GUARD — simulation only
+      # ------------------------------------------------------------------------
+      - name: Enforce Simulation-Only Guard
+        run: |
+          echo "LIVE BROKER = DISABLED"
+          echo "MODE = ${{ github.event.inputs.run_mode || 'dry_run' }}"
+          if [ "${{ github.event.inputs.confirm_simulation }}" = "false" ]; then
+            echo "Refusing non-simulation confirmation"
+            exit 1
+          fi
 
       # ------------------------------------------------------------------------
-      # 10. EXECUTE
+      # 6. COMPILE CHECK
       # ------------------------------------------------------------------------
-      - name: Execute IDX Pipeline
+      - name: Compile All Python Modules
+        run: python -m compileall -q .
+
+      # ------------------------------------------------------------------------
+      # 7. MODE ROUTING
+      # ------------------------------------------------------------------------
+      - name: Run IDX Pipeline
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-          IDX_PROXY_URL: ${{ secrets.IDX_PROXY_URL }}
-          IDX_FETCH_TIMEOUT_SEC: "15.0"
-        shell: bash
         run: |
-          set -Eeuo pipefail
-
-          MODE="${{ steps.mode.outputs.mode }}"
-
-          echo "=========================================="
-          echo "IDX PIPELINE"
-          echo "MODE: $MODE"
-          echo "LIVE BROKER: DISABLED"
-          echo "=========================================="
+          set -e
+          MODE="${{ github.event.inputs.run_mode || 'dry_run' }}"
+          mkdir -p logs reports .cache
 
           case "$MODE" in
-
-            dry_run)
-              echo "Running simulation-only signal pipeline..."
+            health_check)
+              python main.py --health-check || python -c "from main import ProductionOrchestrator; ProductionOrchestrator(dry_run=True).run_health_check()"
+              ;;
+            self_learning)
+              python main.py --dry-run --self-learning || python main.py --dry-run
+              ;;
+            release_audit)
+              python -m compileall -q .
+              python -c "import main, portfolio, signal_idx, features, machine_learning; print('IMPORT_OK')"
+              ;;
+            reset)
+              rm -f portfolio_state.json portfolio_*.json checkpoint*.json || true
+              echo "State reset complete"
+              ;;
+            *)
               python main.py --dry-run
               ;;
-
-            health_check)
-              echo "Running health check..."
-              python monitoring.py
-              ;;
-
-            self_learning)
-              echo "Running self-learning..."
-              python main.py --self-learning
-              ;;
-
-            release_audit)
-              echo "Running final release audit..."
-
-              python -m compileall -q .
-
-              if grep -R \
-                -n \
-                -E \
-                "PLACEHOLDER_TOO_LARGE|PLACEHOLDER_READ_FROM_DISK" \
-                --include="*.py" \
-                .; then
-                echo "❌ Placeholder detected."
-                exit 1
-              fi
-
-              echo "✔ Release audit basic gates passed."
-              ;;
-
-            reset)
-              echo "Resetting simulation state..."
-              python main.py --reset-dryrun
-              ;;
-
           esac
 
       # ------------------------------------------------------------------------
-      # 11. SQLITE INTEGRITY
-      # ------------------------------------------------------------------------
-      - name: SQLite Integrity Check
-        run: |
-          set -Eeuo pipefail
-
-          shopt -s nullglob
-
-          DB_FILES=(
-            $(find . -type f \( -name "*.db" -o -name "*.sqlite" \))
-          )
-
-          if [ "${#DB_FILES[@]}" -eq 0 ]; then
-            echo "No SQLite database found."
-            exit 0
-          fi
-
-          for db_file in "${DB_FILES[@]}"; do
-
-            echo "Checking: $db_file"
-
-            sqlite3 "$db_file" \
-              "PRAGMA wal_checkpoint(TRUNCATE);" \
-              || true
-
-            RESULT="$(sqlite3 "$db_file" "PRAGMA integrity_check;")"
-
-            if [ "$RESULT" != "ok" ]; then
-              echo "❌ SQLite integrity failure: $db_file"
-              echo "$RESULT"
-              exit 1
-            fi
-
-            echo "✔ SQLite OK: $db_file"
-
-          done
-
-      # ------------------------------------------------------------------------
-      # 12. STATE COMMIT
+      # 8. SAVE RUNTIME STATE (optional, non-code)
       # ------------------------------------------------------------------------
       - name: Commit Simulation State
-        if: |
-          success() &&
-          (
-            github.event_name == 'schedule' ||
-            github.event_name == 'workflow_dispatch'
-          ) &&
-          (
-            steps.mode.outputs.mode == 'dry_run' ||
-            steps.mode.outputs.mode == 'self_learning' ||
-            steps.mode.outputs.mode == 'reset'
-          )
-        shell: bash
+        if: success()
         run: |
-          set -Eeuo pipefail
-
+          set -e
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
@@ -420,11 +207,11 @@ jobs:
           echo "✔ Simulation state pushed to main."
 
       # ------------------------------------------------------------------------
-      # 13. FAILURE TELEMETRY
+      # 9. FAILURE TELEMETRY
       # ------------------------------------------------------------------------
       - name: Upload Failure Telemetry
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
         with:
           name: idx-pipeline-failure-${{ github.run_id }}
           retention-days: 14

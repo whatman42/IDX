@@ -1,7 +1,7 @@
 # ==============================================================================
 # GitHub Actions Workflow: IDX Stock Analysis Engine & Scalping Pipeline
 # File: .github/workflows/idx.yml
-# Version: v2026.Q3.v27.1
+# Version: v2026.Q3.v28.2
 # Scope: Signal + Multi-Horizon + Rule-Based Fallback + Simulated Portfolio
 # Execution: SIMULATION ONLY
 # Live Broker: DISABLED
@@ -28,21 +28,19 @@ on:
 
     # --------------------------------------------------------------------------
     # SESSION I
-    # 09:00–12:00 WIB
-    # 02:00–05:00 UTC
-    #
+    # 09:00–12:00 WIB = 02:00–05:00 UTC
     # Every 15 minutes
     # --------------------------------------------------------------------------
     - cron: '*/15 2-4 * * 1-5'
+    - cron: '0 5 * * 1-5'
 
     # --------------------------------------------------------------------------
     # SESSION II
-    # 13:30–15:50 WIB
-    # 06:30–08:50 UTC
-    #
+    # 13:30–15:45 WIB = 06:30–08:45 UTC
     # Every 15 minutes
     # --------------------------------------------------------------------------
-    - cron: '30/15 6-8 * * 1-5'
+    - cron: '30,45 6 * * 1-5'
+    - cron: '*/15 7-8 * * 1-5'
 
     # --------------------------------------------------------------------------
     # POST-MARKET / SELF LEARNING
@@ -114,9 +112,7 @@ jobs:
 
       # =========================================================================
       # 1. CHECKOUT
-      #
-      # actions/checkout@v4.2.2
-      # Full SHA pinned for repository policy.
+      # actions/checkout@v4.2.2 — full SHA pinned for repository policy
       # =========================================================================
       - name: Checkout Repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
@@ -126,7 +122,6 @@ jobs:
 
       # =========================================================================
       # 2. PYTHON
-      #
       # actions/setup-python@v5.6.0
       # =========================================================================
       - name: Set up Python 3.11
@@ -137,7 +132,6 @@ jobs:
 
       # =========================================================================
       # 3. RESTORE MARKET-DATA CACHE
-      #
       # actions/cache@v4.2.4
       # =========================================================================
       - name: Restore Persistent Market Data Cache
@@ -163,6 +157,7 @@ jobs:
             pip install -r requirements.txt
           else
             echo "No requirements.txt found."
+            pip install polars numpy pandas yfinance requests scipy scikit-learn joblib
           fi
 
           if ! command -v sqlite3 >/dev/null 2>&1; then
@@ -175,7 +170,6 @@ jobs:
 
       # =========================================================================
       # 5. SECURITY / ACTION PINNING AUDIT
-      #
       # Fail if workflow source contains unpinned action references.
       # =========================================================================
       - name: Verify GitHub Actions SHA Pinning
@@ -344,7 +338,7 @@ jobs:
           IDX_PROXY_URL: ${{ secrets.IDX_PROXY_URL }}
           IDX_FETCH_TIMEOUT_SEC: "15.0"
 
-          # Explicit safety controls.
+          # Explicit safety controls (also set at job env).
           IDX_SIMULATION_ONLY: "true"
           LIVE_BROKER_ENABLED: "false"
 
@@ -369,6 +363,7 @@ jobs:
           elif [ "$MODE" = "self_learning" ]; then
 
             echo "[SELF LEARNING]"
+            # dry_run is forced True inside ProductionOrchestrator
             python main.py --self-learning
 
           elif [ "$MODE" = "health_check" ]; then
@@ -394,9 +389,6 @@ jobs:
 
       # =========================================================================
       # 12. POST-RUN SIGNAL / PORTFOLIO SAFETY AUDIT
-      #
-      # This does not fabricate a signal. It only verifies source/runtime
-      # safety properties.
       # =========================================================================
       - name: Simulation Safety Gate
         shell: bash
@@ -517,7 +509,6 @@ jobs:
 
       # =========================================================================
       # 15. COMMIT / PUSH STATE
-      #
       # Only runtime state/output is whitelisted.
       # Production source files are deliberately excluded.
       # =========================================================================
@@ -605,9 +596,7 @@ jobs:
 
       # =========================================================================
       # 16. FAILURE TELEMETRY
-      #
-      # actions/upload-artifact@v4.6.2
-      # Full SHA pinned.
+      # actions/upload-artifact@v4.6.2 — full SHA pinned
       # =========================================================================
       - name: Upload Telemetry Logs on Failure
         if: failure()

@@ -1408,12 +1408,6 @@ Objective: {objective}
 Research context (may be empty):
 {research_context}
 
-
-Generate a standalone Python function or class that adds meaningful value to this agent.
-It must be syntactically correct and safe to append at the end of the file.
-Return ONLY the Python code block, nothing else.
-No explanation, no markdown fences.
-"""
         try:
             response = self.model_provider.generate(prompt, max_tokens=2000)
             code = response.strip()

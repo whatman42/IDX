@@ -1442,7 +1442,7 @@ Each "modify" item: {{"path": "relative/path.py", "search": "substring to find",
 Return ONLY JSON, no markdown.
 Research context:
 {research_context}
-"""
+
         response = self.model_provider.generate(prompt, max_tokens=3000)
         try:
             data = json.loads(response)

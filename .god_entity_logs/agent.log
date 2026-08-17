@@ -1,0 +1,8 @@
+2026-08-18T02:26:09Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-18T02:26:10Z | INFO    | [ENVIRONMENT_DISCOVERED] {"summary": {"os": "Linux", "python": [3, 11, 15], "cwd": "/home/runner/work/IDX/IDX", "git": true, "network": true}}
+2026-08-18T02:26:10Z | INFO    | [REPOSITORY_DISCOVERED] {"summary": {"root": "/home/runner/work/IDX/IDX", "files": 36, "languages": {"python": 20, "unknown": 12, "json": 2, "markdown": 1, "text": 1}, "entrypoints": ["main.py", "self_evolving_agent.py"]}}
+2026-08-18T02:26:10Z | INFO    | [CAPABILITY_DISCOVERED] {"capabilities": {"filesystem_read": true, "filesystem_write": true, "subprocess": true, "network": true, "git": true, "git_in_repo": true, "github_cli": true, "github_authenticated": false, "docker": true, "python_package_install": true, "research": true, "self_modify": true, "ci": true}}
+2026-08-18T02:26:10Z | INFO    | Selected model provider: gemini
+2026-08-18T02:26:10Z | INFO    | [RECOVERY_STARTED] {}
+2026-08-18T02:26:10Z | INFO    | [RECOVERY_COMPLETED] {"report": {"action": "active_generation_present", "details": ["G000001"]}}
+2026-08-18T02:26:10Z | INFO    | [BOOT_COMPLETE] {"report_summary": {"provider": "gemini", "network": true, "git": true, "active_gen": "G000001"}}

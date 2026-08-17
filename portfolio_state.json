@@ -1,0 +1,23 @@
+{
+  "equity": 10000000.0,
+  "cash": 10000000.0,
+  "cash_balance": 10000000.0,
+  "total_equity": 10000000.0,
+  "peak_equity": 10000000.0,
+  "invested_amount": 0.0,
+  "drawdown_pct": 0.0,
+  "kill_switch_active": false,
+  "exposure_pct": 0.0,
+  "return_pct": 0.0,
+  "active_positions_count": 0,
+  "positions_count": 0,
+  "active_positions": [],
+  "positions": {},
+  "top_pick": "-",
+  "realized_pnl_accumulated": 0.0,
+  "cumulative_turnover_idr": 0.0,
+  "annualized_turnover_pct": 0.0,
+  "start_timestamp_utc": "2026-08-17T19:26:05.819330+00:00",
+  "transaction_history": [],
+  "last_updated_wib": "2026-08-18 02:26:05 WIB"
+}

@@ -104,6 +104,7 @@ class GenerationStatus(str, Enum):
     FAILED = "FAILED"
     PROMOTED = "PROMOTED"
     ROLLED_BACK = "ROLLED_BACK"
+    SUPERSEDED = "SUPERSEDED"   # added
 
 
 # =============================================================================
@@ -359,7 +360,9 @@ class Memory:
         else:
             data = self._read_json()
             gens = data.get("generations", {})
-            gens[gen.id] = asdict(gen)
+            gen_dict = asdict(gen)
+            gen_dict["status"] = gen.status.value
+            gens[gen.id] = gen_dict
             data["generations"] = gens
             self._write_json(data)
 
@@ -518,7 +521,6 @@ class EnvironmentScanner:
             if is_secret_env(k):
                 result[k] = "AVAILABLE"
             else:
-                # Truncate long non-secret values
                 v = os.environ[k]
                 result[k] = v[:80] + "..." if len(v) > 80 else v
         return result
@@ -557,7 +559,7 @@ class EnvironmentScanner:
             for line in out.splitlines():
                 if "==" in line:
                     pkgs.append(line.strip())
-        return pkgs[:200]  # limit
+        return pkgs[:200]
 
     def _scan_compilers(self) -> Dict[str, Optional[str]]:
         tools = ["python3", "node", "go", "rustc", "javac", "gcc", "g++", "clang", "ruby", "php"]
@@ -611,7 +613,7 @@ class EnvironmentScanner:
     def _scan_testing(self) -> Dict[str, bool]:
         return {
             "pytest": shutil.which("pytest") is not None,
-            "unittest": True,  # always in stdlib
+            "unittest": True,
             "nose": False,
             "jest": shutil.which("jest") is not None or (shutil.which("npx") is not None),
             "go_test": shutil.which("go") is not None,
@@ -733,7 +735,7 @@ class RepositoryScanner:
         self.model = {
             "root": str(self.root),
             "file_count": len(files),
-            "files": files[:500],  # limit stored detail
+            "files": files[:500],
             "languages": {k: len(v) for k, v in by_lang.items()},
             "entrypoints": entrypoints,
             "configs": [c["path"] for c in configs],
@@ -855,7 +857,7 @@ class CapabilityRegistry:
             "model_provider": self._detect_model_providers(),
             "validators": self._detect_validators(),
             "research": self.env.get("network", {}).get("available", False),
-            "self_modify": True,  # we control the process of candidate promotion
+            "self_modify": True,
             "ci": self.env.get("ci_cd", {}).get("github_actions", False) or self.env.get("ci_cd", {}).get("ci", False),
         }
         self.capabilities = caps
@@ -875,13 +877,12 @@ class CapabilityRegistry:
             return False
 
     def _detect_model_providers(self) -> Dict[str, bool]:
-        # Detect presence of credentials (without exposing values)
         providers = {
             "gemini": bool(os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")),
             "openai": bool(os.environ.get("OPENAI_API_KEY")),
             "anthropic": bool(os.environ.get("ANTHROPIC_API_KEY")),
             "grok": bool(os.environ.get("XAI_API_KEY") or os.environ.get("GROK_API_KEY")),
-            "ollama": False,  # could probe localhost later
+            "ollama": False,
         }
         return providers
 
@@ -1051,33 +1052,103 @@ def select_model_provider() -> ModelProvider:
 
 
 # =============================================================================
-# RESEARCH ENGINE
+# RESEARCH ENGINE (Real internet search)
 # =============================================================================
 
 class ResearchEngine:
     def __init__(self, network_available: bool):
         self.network = network_available
-        self.findings: List[Dict[str, Any]] = []
+        self.google_api_key = os.environ.get("GOOGLE_SEARCH_API_KEY", "")
+        self.google_cx = os.environ.get("GOOGLE_SEARCH_CX", "")
 
     def research(self, query: str, max_results: int = 5) -> List[Dict[str, Any]]:
         log.event(Event.RESEARCH_STARTED, query=query)
         if not self.network:
             log.event(Event.RESEARCH_COMPLETED, query=query, results=0, reason="no_network")
             return []
-        # Minimal safe research using public endpoints (no scraping engines hardcoded)
         results = []
-        # Example: use DuckDuckGo HTML lite or just record intent
-        # For safety and determinism we record the research intent and return structured placeholder
-        # Real implementations can expand with official APIs.
-        results.append({
-            "query": query,
-            "source": "local_knowledge_stub",
-            "note": "Full web search requires additional search API. Network is available; expand via evolution.",
-            "timestamp": utc_now(),
-        })
-        self.findings.extend(results)
+        if self.google_api_key and self.google_cx:
+            results = self._google_search(query, max_results)
+        if not results:
+            results = self._ddg_search(query, max_results)
         log.event(Event.RESEARCH_COMPLETED, query=query, results=len(results))
         return results
+
+    def _google_search(self, query, max_results):
+        if not HAS_REQUESTS and not HAS_HTTPX:
+            return []
+        url = "https://www.googleapis.com/customsearch/v1"
+        params = {
+            "key": self.google_api_key,
+            "cx": self.google_cx,
+            "q": query,
+            "num": min(max_results, 10),
+        }
+        try:
+            if HAS_REQUESTS:
+                r = requests.get(url, params=params, timeout=10)
+                if r.status_code != 200:
+                    return []
+                data = r.json()
+            else:
+                r = httpx.get(url, params=params, timeout=10)
+                if r.status_code != 200:
+                    return []
+                data = r.json()
+            items = []
+            for item in data.get("items", []):
+                items.append({
+                    "title": item.get("title"),
+                    "link": item.get("link"),
+                    "snippet": item.get("snippet"),
+                    "source": "google",
+                })
+            return items
+        except Exception as e:
+            log.warning(f"Google search failed: {e}")
+            return []
+
+    def _ddg_search(self, query, max_results):
+        if not HAS_REQUESTS and not HAS_HTTPX:
+            return []
+        url = "https://api.duckduckgo.com/"
+        params = {
+            "q": query,
+            "format": "json",
+            "no_html": 1,
+            "skip_disambig": 1,
+        }
+        try:
+            if HAS_REQUESTS:
+                r = requests.get(url, params=params, timeout=10)
+                if r.status_code != 200:
+                    return []
+                data = r.json()
+            else:
+                r = httpx.get(url, params=params, timeout=10)
+                if r.status_code != 200:
+                    return []
+                data = r.json()
+            results = []
+            if data.get("AbstractText"):
+                results.append({
+                    "title": data.get("Heading", query),
+                    "link": data.get("AbstractURL", ""),
+                    "snippet": data.get("AbstractText"),
+                    "source": "duckduckgo",
+                })
+            for topic in data.get("RelatedTopics", [])[:max_results-1]:
+                if isinstance(topic, dict) and "Text" in topic:
+                    results.append({
+                        "title": topic.get("FirstURL", ""),
+                        "link": topic.get("FirstURL", ""),
+                        "snippet": topic.get("Text"),
+                        "source": "duckduckgo",
+                    })
+            return results[:max_results]
+        except Exception as e:
+            log.warning(f"DuckDuckGo search failed: {e}")
+            return []
 
 
 # =============================================================================
@@ -1094,7 +1165,6 @@ class ValidationEngine:
         log.event(Event.VALIDATION_STARTED, path=str(path))
         results: Dict[str, Any] = {"path": str(path), "checks": {}}
 
-        # Syntax / AST
         if path.suffix == ".py":
             try:
                 source = path.read_text(encoding="utf-8")
@@ -1106,12 +1176,8 @@ class ValidationEngine:
                 results["overall"] = False
                 return results
 
-            # py_compile
             code, out, err = safe_run([sys.executable, "-m", "py_compile", str(path)])
             results["checks"]["py_compile"] = {"ok": code == 0, "stderr": err[:500] if err else ""}
-
-            # import check (best-effort, isolated)
-            # We avoid full import of self to prevent side effects; use compile only for candidates
 
         results["overall"] = all(c.get("ok", False) for c in results["checks"].values()) if results["checks"] else True
         if results["overall"]:
@@ -1125,7 +1191,6 @@ class ValidationEngine:
         return self.validate_file(candidate_path)
 
     def run_self_tests(self) -> Dict[str, Any]:
-        """Lightweight self-tests that do not require external network or credentials."""
         results = {
             "syntax": False,
             "import_structure": False,
@@ -1133,17 +1198,12 @@ class ValidationEngine:
             "memory": False,
             "generation_id": False,
         }
-        # Syntax of this file
         try:
             ast.parse(Path(__file__).read_text(encoding="utf-8"))
             results["syntax"] = True
         except Exception:
             pass
-
-        # Basic structure presence
-        results["import_structure"] = True  # if we reached here
-
-        # Memory
+        results["import_structure"] = True
         try:
             m = Memory(Path("."))
             m.set("_self_test", {"ok": True, "ts": utc_now()})
@@ -1151,14 +1211,11 @@ class ValidationEngine:
             m.close()
         except Exception:
             pass
-
-        # Generation ID
         try:
             gid = Generation.next_id([])
             results["generation_id"] = gid.startswith("G") and len(gid) == 7
         except Exception:
             pass
-
         results["boot_flags"] = True
         results["overall"] = all(results.values())
         return results
@@ -1171,7 +1228,7 @@ class ValidationEngine:
 class GitManager:
     def __init__(self, root: Path, mode: str = GIT_MODE_DEFAULT):
         self.root = root
-        self.mode = mode  # disabled | commit | push
+        self.mode = mode
         self.available = shutil.which("git") is not None
 
     def status(self) -> Dict[str, Any]:
@@ -1246,7 +1303,6 @@ class ExperimentEngine:
         return exp
 
     def _compare(self, baseline: Dict, candidate: Dict) -> bool:
-        # Simple heuristic: prefer higher "score" or lower "errors"
         b_score = baseline.get("score", 0)
         c_score = candidate.get("score", 0)
         return c_score > b_score
@@ -1264,37 +1320,69 @@ class EvolutionEngine:
         validator: ValidationEngine,
         git: GitManager,
         base_dir: Path,
+        model_provider: Optional[ModelProvider] = None,
+        research_engine: Optional[ResearchEngine] = None,
     ):
         self.core_path = core_path
         self.memory = memory
         self.validator = validator
         self.git = git
         self.base_dir = base_dir
+        self.model_provider = model_provider
+        self.research_engine = research_engine
         self.candidate_dir = base_dir / CANDIDATE_DIR
         self.candidate_dir.mkdir(parents=True, exist_ok=True)
 
     def create_candidate(self, objective: str, modifications: Optional[str] = None) -> Tuple[str, Path]:
-        """
-        CURRENT → DUPLICATE → CANDIDATE
-        Never replace running process directly.
-        """
         log.event(Event.EVOLUTION_STARTED, objective=objective)
         existing = [g.get("id", "") for g in self.memory.list_generations()]
         new_id = Generation.next_id(existing)
         candidate_name = f"candidate_generation_{new_id}.py"
         candidate_path = self.candidate_dir / candidate_name
 
-        # Duplicate
+        # Duplicate core
         shutil.copy2(self.core_path, candidate_path)
         log.event(Event.CANDIDATE_CREATED, generation=new_id, path=str(candidate_path))
 
-        # Optional simple modification (safe, evidence-driven later)
+        changes_applied = ["duplicate_core"]
+
+        # 1. Research context (if network and engine available)
+        research_context = ""
+        if self.research_engine and self.research_engine.network:
+            research_results = self.research_engine.research(objective, max_results=3)
+            research_context = "\n".join(
+                f"- {r.get('title', '')}: {r.get('snippet', '')[:200]}"
+                for r in research_results
+            )
+
+        # 2. LLM enhancement: append generated code to candidate
+        enhancement_code = self._generate_enhancement(objective, research_context)
+        if enhancement_code:
+            try:
+                with open(candidate_path, "a", encoding="utf-8") as f:
+                    f.write("\n\n# ==== AUTONOMOUS ENHANCEMENT ====\n")
+                    f.write(enhancement_code)
+                    f.write("\n# ==== END ENHANCEMENT ====\n")
+                changes_applied.append("llm_enhancement")
+                log.info(f"✅ LLM enhancement appended ({len(enhancement_code)} chars)")
+            except Exception as e:
+                log.error(f"Failed to append enhancement: {e}")
+        else:
+            changes_applied.append("no_llm_enhancement")
+
+        # 3. Workspace modifications (create/modify other files)
+        workspace_changes = self._apply_llm_changes(objective, research_context)
+        if workspace_changes:
+            changes_applied.extend(workspace_changes)
+            log.info(f"✅ Workspace modifications: {workspace_changes}")
+
+        # 4. Optional marker (lineage)
         if modifications:
             try:
                 text = candidate_path.read_text(encoding="utf-8")
-                # Extremely conservative: only allow appending a comment marker for lineage
                 marker = f"\n\n# GENERATION {new_id} | parent lineage | objective: {objective[:80]}\n"
                 candidate_path.write_text(text + marker, encoding="utf-8")
+                changes_applied.append("lineage_marker")
             except Exception as e:
                 log.error(f"Candidate modification failed: {e}")
 
@@ -1304,15 +1392,104 @@ class EvolutionEngine:
             timestamp=utc_now(),
             objective=objective,
             source_hash=sha256_file(candidate_path),
-            changes=["duplicate_core", "append_generation_marker"] if modifications else ["duplicate_core"],
+            changes=changes_applied,
             status=GenerationStatus.CANDIDATE,
         )
         self.memory.save_generation(gen)
         return new_id, candidate_path
 
+    def _generate_enhancement(self, objective: str, research_context: str) -> str:
+        if not self.model_provider or not self.model_provider.available():
+            return ""
+        prompt = f"""
+You are an expert Python developer improving an autonomous agent.
+Objective: {objective}
+
+Research context (may be empty):
+{research_context}
+
+Current agent code (first 3000 chars):
+
+
+Generate a standalone Python function or class that adds meaningful value to this agent.
+It must be syntactically correct and safe to append at the end of the file.
+Return ONLY the Python code block, nothing else.
+No explanation, no markdown fences.
+"""
+        try:
+            response = self.model_provider.generate(prompt, max_tokens=2000)
+            code = response.strip()
+            if code.startswith("```python"):
+                code = code[9:]
+            if code.endswith("```"):
+                code = code[:-3]
+            code = code.strip()
+            if not code:
+                return ""
+            try:
+                ast.parse(code)
+                return code
+            except SyntaxError:
+                return ""
+        except Exception as e:
+            log.warning(f"LLM enhancement generation failed: {e}")
+            return ""
+
+    def _apply_llm_changes(self, objective: str, research_context: str) -> List[str]:
+        """Minta LLM menghasilkan file baru atau modifikasi file lain di workspace."""
+        if not self.model_provider or not self.model_provider.available():
+            return []
+        prompt = f"""
+You are an autonomous developer. Objective: {objective}
+
+You may create new Python modules or modify existing ones in the repository (except .git, .god_entity_candidates, and backups).
+Return a JSON object with optional arrays "create" and "modify".
+Each "create" item: {{"path": "relative/path.py", "content": "python code"}}
+Each "modify" item: {{"path": "relative/path.py", "search": "substring to find", "replace": "new content"}}
+
+Return ONLY JSON, no markdown.
+Research context:
+{research_context}
+"""
+        response = self.model_provider.generate(prompt, max_tokens=3000)
+        try:
+            data = json.loads(response)
+        except json.JSONDecodeError:
+            return []
+        changes = []
+        # Create files
+        for create_item in data.get("create", []):
+            path = (self.base_dir / create_item["path"]).resolve()
+            if not self._is_safe_path(path):
+                continue
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(create_item["content"], encoding="utf-8")
+            changes.append(f"created:{create_item['path']}")
+        # Modify files
+        for mod_item in data.get("modify", []):
+            path = (self.base_dir / mod_item["path"]).resolve()
+            if not self._is_safe_path(path) or not path.exists():
+                continue
+            text = path.read_text(encoding="utf-8")
+            new_text = text.replace(mod_item["search"], mod_item["replace"])
+            if new_text != text:
+                path.write_text(new_text, encoding="utf-8")
+                changes.append(f"modified:{mod_item['path']}")
+        return changes
+
+    def _is_safe_path(self, path: Path) -> bool:
+        try:
+            path.relative_to(self.base_dir)
+        except ValueError:
+            return False
+        forbidden = {".git", ".god_entity_candidates", ".god_entity_logs", "__pycache__"}
+        for part in path.parts:
+            if part in forbidden:
+                return False
+        return True
+
     def validate_and_evaluate(self, gen_id: str, candidate_path: Path) -> Dict[str, Any]:
         results = self.validator.validate_generation_candidate(candidate_path)
-        # Additional: try to run --test-boot on candidate in subprocess (isolated)
         code, out, err = safe_run(
             [sys.executable, str(candidate_path), "--test-boot"],
             timeout=45,
@@ -1328,37 +1505,23 @@ class EvolutionEngine:
         return results
 
     def promote(self, gen_id: str, candidate_path: Path, test_results: Dict[str, Any]) -> bool:
-        """Promote only after successful validation. Replace core atomically via rename."""
         if not test_results.get("overall"):
             log.event(Event.VALIDATION_FAILED, generation=gen_id)
             # Mark failed
-            gens = self.memory.list_generations()
-            for g in gens:
-                if g.get("id") == gen_id:
-                    g["status"] = GenerationStatus.FAILED.value
-                    g["test_results"] = test_results
-                    # re-save
-                    gen_obj = Generation(
-                        id=g["id"],
-                        parent=g.get("parent"),
-                        timestamp=g.get("timestamp", utc_now()),
-                        objective=g.get("objective", ""),
-                        source_hash=g.get("source_hash", ""),
-                        changes=json.loads(g["changes"]) if isinstance(g.get("changes"), str) else g.get("changes", []),
-                        test_results=test_results,
-                        evaluation={"promoted": False},
-                        status=GenerationStatus.FAILED,
-                    )
-                    self.memory.save_generation(gen_obj)
-                    break
+            self._mark_generation_failed(gen_id, test_results)
             return False
 
-        # Atomic promote: write to temp then replace
         backup = self.core_path.with_suffix(".py.bak")
         try:
+            # Backup current core
             shutil.copy2(self.core_path, backup)
+            # Replace core with candidate
             shutil.copy2(candidate_path, self.core_path)
-            # Update generation status
+
+            # Deactivate all previous active generations
+            self._deactivate_previous_generations(except_id=gen_id)
+
+            # Save new generation as ACTIVE
             gen_obj = Generation(
                 id=gen_id,
                 parent=None,
@@ -1368,22 +1531,60 @@ class EvolutionEngine:
                 changes=["promoted_from_candidate"],
                 test_results=test_results,
                 evaluation={"promoted": True, "backup": str(backup)},
-                status=GenerationStatus.PROMOTED,
+                status=GenerationStatus.ACTIVE,
             )
             self.memory.save_generation(gen_obj)
-            # Also mark as ACTIVE
-            gen_obj.status = GenerationStatus.ACTIVE
-            self.memory.save_generation(gen_obj)
+
+            # Cleanup candidate file
+            try:
+                candidate_path.unlink(missing_ok=True)
+            except Exception:
+                pass
+
             log.event(Event.GENERATION_PROMOTED, generation=gen_id, hash=gen_obj.source_hash)
             self.git.commit_if_enabled(f"GOD_ENTITY: promote {gen_id}")
             return True
         except Exception as e:
             log.error(f"Promotion failed: {e}")
-            # Attempt restore
             if backup.exists():
                 shutil.copy2(backup, self.core_path)
             log.event(Event.GENERATION_ROLLED_BACK, generation=gen_id, reason=str(e))
             return False
+
+    def _mark_generation_failed(self, gen_id: str, test_results: Dict[str, Any]) -> None:
+        gens = self.memory.list_generations()
+        for g in gens:
+            if g.get("id") == gen_id:
+                gen_obj = Generation(
+                    id=g["id"],
+                    parent=g.get("parent"),
+                    timestamp=g.get("timestamp", utc_now()),
+                    objective=g.get("objective", ""),
+                    source_hash=g.get("source_hash", ""),
+                    changes=json.loads(g["changes"]) if isinstance(g.get("changes"), str) else g.get("changes", []),
+                    test_results=test_results,
+                    evaluation={"promoted": False},
+                    status=GenerationStatus.FAILED,
+                )
+                self.memory.save_generation(gen_obj)
+                break
+
+    def _deactivate_previous_generations(self, except_id: str) -> None:
+        gens = self.memory.list_generations()
+        for g in gens:
+            if g.get("id") != except_id and g.get("status") == GenerationStatus.ACTIVE.value:
+                gen_obj = Generation(
+                    id=g["id"],
+                    parent=g.get("parent"),
+                    timestamp=g.get("timestamp", utc_now()),
+                    objective=g.get("objective", ""),
+                    source_hash=g.get("source_hash", ""),
+                    changes=json.loads(g["changes"]) if isinstance(g.get("changes"), str) else g.get("changes", []),
+                    test_results=json.loads(g["test_results"]) if isinstance(g.get("test_results"), str) else g.get("test_results", {}),
+                    evaluation=json.loads(g["evaluation"]) if isinstance(g.get("evaluation"), str) else g.get("evaluation", {}),
+                    status=GenerationStatus.SUPERSEDED,
+                )
+                self.memory.save_generation(gen_obj)
 
     def rollback(self, gen_id: Optional[str] = None) -> bool:
         backup = self.core_path.with_suffix(".py.bak")
@@ -1410,11 +1611,9 @@ class RecoveryManager:
         active = self.memory.get_active_generation()
         gens = self.memory.list_generations()
 
-        # Discard incomplete candidates
         for g in gens:
             if g.get("status") == GenerationStatus.CANDIDATE.value:
                 report["details"].append(f"discard_incomplete_candidate:{g.get('id')}")
-                # mark failed
                 try:
                     gen_obj = Generation(
                         id=g["id"],
@@ -1428,9 +1627,7 @@ class RecoveryManager:
                 except Exception:
                     pass
 
-        # Ensure we have at least one ACTIVE generation
         if not active:
-            # Create initial
             source_hash = sha256_file(self.core_path) if self.core_path.exists() else "unknown"
             init = Generation(
                 id="G000001",
@@ -1466,7 +1663,7 @@ class GodEntity:
         self.repo: Dict[str, Any] = {}
         self.capabilities: Dict[str, Any] = {}
         self.provider: ModelProvider = NullProvider()
-        self.research = ResearchEngine(False)
+        self.research: ResearchEngine = ResearchEngine(False)
         self.validator: Optional[ValidationEngine] = None
         self.git: Optional[GitManager] = None
         self.evolution: Optional[EvolutionEngine] = None
@@ -1483,30 +1680,23 @@ class GodEntity:
         self._booted = False
 
     def boot(self) -> Dict[str, Any]:
-        """First boot sequence (section 34)."""
         report: Dict[str, Any] = {"steps": []}
 
-        # 1. identify itself
         report["steps"].append({"identify_self": str(self.core_path), "version": VERSION})
 
-        # 2. environment
         self.env = self.env_scanner.scan()
         report["steps"].append({"environment": "scanned"})
 
-        # 3. repository
         self.repo = self.repo_scanner.scan()
         report["steps"].append({"repository": "scanned", "files": self.repo.get("file_count")})
 
-        # 4. capabilities
         reg = CapabilityRegistry(self.env, self.repo)
         self.capabilities = reg.discover()
         report["steps"].append({"capabilities": list(self.capabilities.keys())})
 
-        # 5. model provider
         self.provider = select_model_provider()
         report["steps"].append({"model_provider": self.provider.name()})
 
-        # 6. GitHub capability (already in caps)
         report["steps"].append({
             "github": {
                 "cli": self.capabilities.get("github_cli"),
@@ -1514,26 +1704,27 @@ class GodEntity:
             }
         })
 
-        # 7. validators
         self.validator = ValidationEngine(self.capabilities, self.base_dir)
         report["steps"].append({"validators": self.capabilities.get("validators")})
 
-        # 8. memory already initialized
         report["steps"].append({"memory_backend": self.memory.backend})
 
-        # Git + Evolution + Recovery
         self.git = GitManager(self.base_dir, self.config["git_mode"])
+        self.research = ResearchEngine(self.capabilities.get("network", False))
+
         self.evolution = EvolutionEngine(
-            self.core_path, self.memory, self.validator, self.git, self.base_dir
+            self.core_path,
+            self.memory,
+            self.validator,
+            self.git,
+            self.base_dir,
+            model_provider=self.provider,
+            research_engine=self.research,
         )
         self.recovery = RecoveryManager(self.memory, self.evolution, self.core_path)
         recovery_report = self.recovery.recover_if_needed()
         report["steps"].append({"recovery": recovery_report})
 
-        # Research
-        self.research = ResearchEngine(self.capabilities.get("network", False))
-
-        # 9. initial generation ensured by recovery
         active = self.memory.get_active_generation()
         report["steps"].append({"active_generation": active.get("id") if active else None})
 
@@ -1571,7 +1762,6 @@ class GodEntity:
         }
 
     def discover(self) -> Dict[str, Any]:
-        # Re-scan if needed
         self.env = self.env_scanner.scan()
         self.repo = self.repo_scanner.scan()
         reg = CapabilityRegistry(self.env, self.repo)
@@ -1598,7 +1788,6 @@ class GodEntity:
             "evaluation_criteria": [],
             "created_at": utc_now(),
         }
-        # Deterministic baseline plan (LLM can enrich when available)
         plan["measurable_objectives"] = [
             "Produce evidence of improvement (test/build/metric)",
             "Keep agent bootable after any change",
@@ -1621,7 +1810,6 @@ class GodEntity:
             "self_test_ok",
             "no_secret_leak",
         ]
-        # Optionally enrich with LLM
         if self.provider.name() != "null":
             llm_plan = self.reason(f"Create a concrete plan for goal: {goal}\nContext: {json.dumps(self.observe(), default=str)[:2000]}")
             plan["llm_enrichment"] = llm_plan[:2000]
@@ -1660,15 +1848,12 @@ class GodEntity:
         objective = objective or self.goal or "self_improvement_cycle"
         report: Dict[str, Any] = {"objective": objective, "steps": []}
 
-        # Create candidate
         gid, cand_path = self.evolution.create_candidate(objective, modifications="lineage_marker")
         report["steps"].append({"created": gid, "path": str(cand_path)})
 
-        # Validate
         test_results = self.evolution.validate_and_evaluate(gid, cand_path)
         report["steps"].append({"validation": test_results.get("overall"), "details": test_results})
 
-        # Promote only on evidence
         if test_results.get("overall") and not self.config.get("dry_run"):
             promoted = self.evolution.promote(gid, cand_path, test_results)
             report["promoted"] = promoted
@@ -1678,9 +1863,6 @@ class GodEntity:
         return report
 
     def run_loop(self, max_iterations: Optional[int] = None) -> Dict[str, Any]:
-        """
-        OBSERVE → DISCOVER → RESEARCH → REASON → PLAN → ACT → EVALUATE → LEARN → EVOLVE → VALIDATE → PROMOTE → REPEAT
-        """
         if not self._booted:
             self.boot()
         if not self.goal:
@@ -1698,12 +1880,10 @@ class GodEntity:
 
             obs = self.observe()
             caps = self.discover()
-            # Research only if needed and network present
             if self.capabilities.get("research") and i == 0:
                 self.research_query(f"best practices for {self.goal}")
 
             plan = self.plan(self.goal)
-            # Conservative action: one evolution attempt per few iterations
             if i % 3 == 0:
                 evo = self.evolve_once(self.goal)
                 history.append({"iteration": i, "evolution": evo})
@@ -1711,7 +1891,6 @@ class GodEntity:
                 act_res = self.act("validate_active_core", dry_run=self.config["dry_run"])
                 history.append({"iteration": i, "action": act_res})
 
-            # Simple stop condition: if we already have solid self-tests, pause
             if i >= 2:
                 st = self.validator.run_self_tests()
                 if st.get("overall"):
@@ -1746,10 +1925,9 @@ class GodEntity:
         }
 
     def test_boot(self) -> Dict[str, Any]:
-        """Comprehensive boot + self-test used by --test-boot."""
         report = {
             "syntax": False,
-            "import": True,  # we are running
+            "import": True,
             "boot": False,
             "self_test": {},
             "dependency_availability": {
@@ -1762,14 +1940,12 @@ class GodEntity:
             "research_capability": False,
             "overall": False,
         }
-        # Syntax
         try:
             ast.parse(self.core_path.read_text(encoding="utf-8"))
             report["syntax"] = True
         except Exception as e:
             report["syntax_error"] = str(e)
 
-        # Boot
         try:
             boot_report = self.boot()
             report["boot"] = True
@@ -1778,16 +1954,14 @@ class GodEntity:
                 "active_gen": (self.memory.get_active_generation() or {}).get("id"),
                 "files_scanned": self.repo.get("file_count"),
             }
-        except Exception as e:
+        except Exception:
             report["boot_error"] = traceback.format_exc()
 
-        # Self tests
         if self.validator:
             report["self_test"] = self.validator.run_self_tests()
         else:
             report["self_test"] = {"overall": False, "reason": "no_validator"}
 
-        # Capabilities after boot
         report["git_capability"] = bool(self.capabilities.get("git"))
         report["github_capability"] = bool(self.capabilities.get("github_cli"))
         report["research_capability"] = bool(self.capabilities.get("research") or self.capabilities.get("network"))
@@ -1843,7 +2017,6 @@ def main(argv: Optional[List[str]] = None) -> int:
         print(json.dumps(report, indent=2, default=str))
         return 0 if report.get("overall") else 1
 
-    # Always boot for other commands
     agent.boot()
 
     if args.goal:
@@ -1893,7 +2066,6 @@ def main(argv: Optional[List[str]] = None) -> int:
         print(json.dumps(report, indent=2, default=str))
         return 0
 
-    # Default: show status if no specific command
     if not any([args.goal, args.observe, args.discover, args.research, args.run,
                 args.evolve, args.validate, args.status, args.generation, args.rollback]):
         print(json.dumps(agent.status(), indent=2, default=str))

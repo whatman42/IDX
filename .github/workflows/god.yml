@@ -12,7 +12,7 @@
 # - Secrets supplied only through GitHub Actions secrets.
 # ==============================================================================
 
-name: IDX Stock Analysis Engine
+name: GOD
 
 on:
   # ============================================================================

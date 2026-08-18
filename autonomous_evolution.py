@@ -2,8 +2,8 @@ import os
 import sys
 import json
 
-def run():
-    print("Autonomous developer system active and expanding capabilities.")
+def main():
+    print("Autonomous development module active.")
 
 if __name__ == '__main__':
-    run()
+    main()

@@ -419,3 +419,124 @@
 2026-08-18T12:26:12Z | INFO    | [VALIDATION_SUCCESS] {"path": "/home/runner/work/IDX/IDX/self_evolving_agent.py"}
 2026-08-18T12:26:12Z | INFO    | [ACTION_COMPLETED] {"task": "validate_active_core", "status": "completed"}
 2026-08-18T12:26:12Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": ".god_entity_memory.db"}
+2026-08-18T13:47:59Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-18T13:48:03Z | INFO    | [ENVIRONMENT_DISCOVERED] {"summary": {"os": "Linux", "python": [3, 11, 15], "cwd": "/home/runner/work/IDX/IDX", "git": true, "network": true}}
+2026-08-18T13:48:03Z | INFO    | [REPOSITORY_DISCOVERED] {"summary": {"root": "/home/runner/work/IDX/IDX", "files": 37, "languages": {"python": 21, "unknown": 12, "json": 2, "markdown": 1, "text": 1}, "entrypoints": ["main.py", "self_evolving_agent.py"]}}
+2026-08-18T13:48:03Z | INFO    | [CAPABILITY_DISCOVERED] {"capabilities": {"filesystem_read": true, "filesystem_write": true, "subprocess": true, "network": true, "git": true, "git_in_repo": true, "github_cli": true, "github_authenticated": false, "docker": true, "python_package_install": true, "research": true, "self_modify": true, "ci": true}}
+2026-08-18T13:48:03Z | INFO    | Selected model provider: gemini
+2026-08-18T13:48:03Z | INFO    | 👤 [CREATOR] Identitas kreator dimuat dari environment variables.
+2026-08-18T13:48:03Z | INFO    | [RECOVERY_STARTED] {}
+2026-08-18T13:48:03Z | INFO    | [RECOVERY_COMPLETED] {"report": {"action": "active_generation_present", "details": ["G000009"]}}
+2026-08-18T13:48:03Z | INFO    | [GOAL_RECEIVED] {"goal": "Maximalkan keuntungan legal untuk pemilik melalui trading, pendapatan online, at..."}
+2026-08-18T13:48:03Z | INFO    | 🎯 [PROFIT_MISSION] Goal disetel (tanpa ekspos identitas lengkap)
+2026-08-18T13:48:03Z | INFO    | [BOOT_COMPLETE] {"report_summary": {"provider": "gemini", "network": true, "git": true, "active_gen": "G000009"}}
+2026-08-18T13:48:03Z | INFO    | [LOOP_ITERATION] {"iteration": 0}
+2026-08-18T13:48:04Z | INFO    | [ENVIRONMENT_DISCOVERED] {"summary": {"os": "Linux", "python": [3, 11, 15], "cwd": "/home/runner/work/IDX/IDX", "git": true, "network": true}}
+2026-08-18T13:48:04Z | INFO    | [REPOSITORY_DISCOVERED] {"summary": {"root": "/home/runner/work/IDX/IDX", "files": 37, "languages": {"python": 21, "unknown": 12, "json": 2, "markdown": 1, "text": 1}, "entrypoints": ["main.py", "self_evolving_agent.py"]}}
+2026-08-18T13:48:04Z | INFO    | [CAPABILITY_DISCOVERED] {"capabilities": {"filesystem_read": true, "filesystem_write": true, "subprocess": true, "network": true, "git": true, "git_in_repo": true, "github_cli": true, "github_authenticated": false, "docker": true, "python_package_install": true, "research": true, "self_modify": true, "ci": true}}
+2026-08-18T13:48:04Z | INFO    | [RESEARCH_STARTED] {"query": "legal ways to make money online 2026"}
+2026-08-18T13:48:04Z | INFO    | [RESEARCH_COMPLETED] {"query": "legal ways to make money online 2026", "results": 0}
+2026-08-18T13:48:04Z | INFO    | [RESEARCH_STARTED] {"query": "profitable trading strategies for Indonesian stocks"}
+2026-08-18T13:48:04Z | INFO    | [RESEARCH_COMPLETED] {"query": "profitable trading strategies for Indonesian stocks", "results": 0}
+2026-08-18T13:48:04Z | INFO    | [RESEARCH_STARTED] {"query": "best passive income strategies legal"}
+2026-08-18T13:48:04Z | INFO    | [RESEARCH_COMPLETED] {"query": "best passive income strategies legal", "results": 0}
+2026-08-18T13:48:05Z | INFO    | 🧠 [GEMINI] Discovered 50 models
+2026-08-18T13:48:05Z | INFO    | 🎯 [GEMINI] Trying model: gemini-3.6-flash
+2026-08-18T13:48:16Z | INFO    | ✅ [GEMINI] Success with gemini-3.6-flash | audit={'requested_model': 'gemini-3.6-flash', 'latency_ms': 11202, 'error_type': None, 'success': True, 'status_code': 200, 'token_usage': {'promptTokenCount': 837, 'candidatesTokenCount': 1207, 'totalTokenCount': 2471, 'promptTokensDetails': [{'modality': 'TEXT', 'tokenCount': 837}], 'thoughtsTokenCount': 427, 'serviceTier': 'standard'}, 'resolved_model': 'gemini-3.6-flash', 'fallback_trigger': False}
+2026-08-18T13:48:16Z | INFO    | [PLAN_CREATED] {"goal": "Maximalkan keuntungan legal untuk pemilik melalui trading, pendapatan online, at..."}
+2026-08-18T13:48:16Z | INFO    | [EVOLUTION_STARTED] {"objective": "Maximalkan keuntungan legal untuk pemilik melalui trading, pendapatan online, atau peluang legal lainnya. Gunakan riset internet dan self-evolution untuk menemukan serta mengeksekusi strategi terbaik."}
+2026-08-18T13:48:16Z | INFO    | [CANDIDATE_CREATED] {"generation": "G000010", "path": "/home/runner/work/IDX/IDX/.god_entity_candidates/candidate_generation_G000010.py"}
+2026-08-18T13:48:16Z | INFO    | [RESEARCH_STARTED] {"query": "Maximalkan keuntungan legal untuk pemilik melalui trading, pendapatan online, atau peluang legal lainnya. Gunakan riset internet dan self-evolution untuk menemukan serta mengeksekusi strategi terbaik."}
+2026-08-18T13:48:16Z | INFO    | [RESEARCH_COMPLETED] {"query": "Maximalkan keuntungan legal untuk pemilik melalui trading, pendapatan online, atau peluang legal lainnya. Gunakan riset internet dan self-evolution untuk menemukan serta mengeksekusi strategi terbaik.", "results": 0}
+2026-08-18T13:48:16Z | INFO    | 🎯 [GEMINI] Trying model: gemini-3.6-flash
+2026-08-18T13:48:16Z | WARNING | ⚠️ [GEMINI] Falling back to gemini-3.5-flash-lite
+2026-08-18T13:48:19Z | INFO    | ✅ [GEMINI] Fallback success with gemini-3.5-flash-lite | audit={'requested_model': 'gemini-3.5-flash-lite', 'latency_ms': 2525, 'error_type': None, 'success': True, 'status_code': 200, 'token_usage': {'promptTokenCount': 127, 'candidatesTokenCount': 809, 'totalTokenCount': 936, 'promptTokensDetails': [{'modality': 'TEXT', 'tokenCount': 127}], 'serviceTier': 'standard'}, 'resolved_model': 'gemini-3.5-flash-lite', 'fallback_trigger': True, 'original_error': 'HTTP_429'}
+2026-08-18T13:48:19Z | INFO    | 🎯 [GEMINI] Trying model: gemini-3.6-flash
+2026-08-18T13:48:42Z | INFO    | ✅ [GEMINI] Success with gemini-3.6-flash | audit={'requested_model': 'gemini-3.6-flash', 'latency_ms': 23023, 'error_type': None, 'success': True, 'status_code': 200, 'token_usage': {'promptTokenCount': 158, 'candidatesTokenCount': 456, 'totalTokenCount': 1177, 'promptTokensDetails': [{'modality': 'TEXT', 'tokenCount': 158}], 'thoughtsTokenCount': 563, 'serviceTier': 'standard'}, 'resolved_model': 'gemini-3.6-flash', 'fallback_trigger': False}
+2026-08-18T13:48:42Z | INFO    | ✅ Workspace modifications: ['created:src/trading_agent.py']
+2026-08-18T13:48:42Z | INFO    | [VALIDATION_STARTED] {"path": "/home/runner/work/IDX/IDX/.god_entity_candidates/candidate_generation_G000010.py"}
+2026-08-18T13:48:42Z | INFO    | [VALIDATION_SUCCESS] {"path": "/home/runner/work/IDX/IDX/.god_entity_candidates/candidate_generation_G000010.py"}
+2026-08-18T13:48:42Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-18T13:48:43Z | INFO    | [ENVIRONMENT_DISCOVERED] {"summary": {"os": "Linux", "python": [3, 11, 15], "cwd": "/home/runner/work/IDX/IDX", "git": true, "network": true}}
+2026-08-18T13:48:43Z | INFO    | [REPOSITORY_DISCOVERED] {"summary": {"root": "/home/runner/work/IDX/IDX", "files": 38, "languages": {"python": 22, "unknown": 12, "json": 2, "markdown": 1, "text": 1}, "entrypoints": ["main.py", "self_evolving_agent.py"]}}
+2026-08-18T13:48:43Z | INFO    | [CAPABILITY_DISCOVERED] {"capabilities": {"filesystem_read": true, "filesystem_write": true, "subprocess": true, "network": true, "git": true, "git_in_repo": true, "github_cli": true, "github_authenticated": false, "docker": true, "python_package_install": true, "research": true, "self_modify": true, "ci": true}}
+2026-08-18T13:48:43Z | INFO    | Selected model provider: gemini
+2026-08-18T13:48:43Z | INFO    | 👤 [CREATOR] Identitas kreator dimuat dari environment variables.
+2026-08-18T13:48:43Z | INFO    | [RECOVERY_STARTED] {}
+2026-08-18T13:48:43Z | INFO    | [RECOVERY_COMPLETED] {"report": {"action": "active_generation_present", "details": ["discard_incomplete_candidate:G000010", "G000009"]}}
+2026-08-18T13:48:43Z | INFO    | [GOAL_RECEIVED] {"goal": "Maximalkan keuntungan legal untuk pemilik melalui trading, pendapatan online, at..."}
+2026-08-18T13:48:43Z | INFO    | 🎯 [PROFIT_MISSION] Goal disetel (tanpa ekspos identitas lengkap)
+2026-08-18T13:48:43Z | INFO    | [BOOT_COMPLETE] {"report_summary": {"provider": "gemini", "network": true, "git": true, "active_gen": "G000009"}}
+2026-08-18T13:48:43Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": ".god_entity_memory.db"}
+2026-08-18T13:48:43Z | INFO    | [GENERATION_PROMOTED] {"generation": "G000010", "hash": "56ddd26b7d4af90b902cceb891dc4b72d5c4b835053e8b227a53251a3f2b51e8"}
+2026-08-18T13:48:43Z | INFO    | [LOOP_ITERATION] {"iteration": 1}
+2026-08-18T13:48:43Z | INFO    | [ENVIRONMENT_DISCOVERED] {"summary": {"os": "Linux", "python": [3, 11, 15], "cwd": "/home/runner/work/IDX/IDX", "git": true, "network": true}}
+2026-08-18T13:48:43Z | INFO    | [REPOSITORY_DISCOVERED] {"summary": {"root": "/home/runner/work/IDX/IDX", "files": 38, "languages": {"python": 22, "unknown": 12, "json": 2, "markdown": 1, "text": 1}, "entrypoints": ["main.py", "self_evolving_agent.py"]}}
+2026-08-18T13:48:43Z | INFO    | [CAPABILITY_DISCOVERED] {"capabilities": {"filesystem_read": true, "filesystem_write": true, "subprocess": true, "network": true, "git": true, "git_in_repo": true, "github_cli": true, "github_authenticated": false, "docker": true, "python_package_install": true, "research": true, "self_modify": true, "ci": true}}
+2026-08-18T13:48:43Z | INFO    | 🎯 [GEMINI] Trying model: gemini-3.6-flash
+2026-08-18T13:48:44Z | WARNING | ⚠️ [GEMINI] Falling back to gemini-3.5-flash-lite
+2026-08-18T13:48:49Z | INFO    | ✅ [GEMINI] Fallback success with gemini-3.5-flash-lite | audit={'requested_model': 'gemini-3.5-flash-lite', 'latency_ms': 5026, 'error_type': None, 'success': True, 'status_code': 200, 'token_usage': {'promptTokenCount': 840, 'candidatesTokenCount': 1035, 'totalTokenCount': 1875, 'promptTokensDetails': [{'modality': 'TEXT', 'tokenCount': 840}], 'serviceTier': 'standard'}, 'resolved_model': 'gemini-3.5-flash-lite', 'fallback_trigger': True, 'original_error': 'HTTP_429'}
+2026-08-18T13:48:49Z | INFO    | [PLAN_CREATED] {"goal": "Maximalkan keuntungan legal untuk pemilik melalui trading, pendapatan online, at..."}
+2026-08-18T13:48:49Z | INFO    | [ACTION_STARTED] {"task": "validate_active_core", "dry_run": false}
+2026-08-18T13:48:49Z | INFO    | [VALIDATION_STARTED] {"path": "/home/runner/work/IDX/IDX/self_evolving_agent.py"}
+2026-08-18T13:48:49Z | INFO    | [VALIDATION_SUCCESS] {"path": "/home/runner/work/IDX/IDX/self_evolving_agent.py"}
+2026-08-18T13:48:49Z | INFO    | [ACTION_COMPLETED] {"task": "validate_active_core", "status": "completed"}
+2026-08-18T13:48:49Z | INFO    | [LOOP_ITERATION] {"iteration": 2}
+2026-08-18T13:48:49Z | INFO    | [ENVIRONMENT_DISCOVERED] {"summary": {"os": "Linux", "python": [3, 11, 15], "cwd": "/home/runner/work/IDX/IDX", "git": true, "network": true}}
+2026-08-18T13:48:49Z | INFO    | [REPOSITORY_DISCOVERED] {"summary": {"root": "/home/runner/work/IDX/IDX", "files": 38, "languages": {"python": 22, "unknown": 12, "json": 2, "markdown": 1, "text": 1}, "entrypoints": ["main.py", "self_evolving_agent.py"]}}
+2026-08-18T13:48:49Z | INFO    | [CAPABILITY_DISCOVERED] {"capabilities": {"filesystem_read": true, "filesystem_write": true, "subprocess": true, "network": true, "git": true, "git_in_repo": true, "github_cli": true, "github_authenticated": false, "docker": true, "python_package_install": true, "research": true, "self_modify": true, "ci": true}}
+2026-08-18T13:48:49Z | INFO    | 🎯 [GEMINI] Trying model: gemini-3.6-flash
+2026-08-18T13:48:50Z | WARNING | ⚠️ [GEMINI] Falling back to gemini-3.5-flash-lite
+2026-08-18T13:48:54Z | INFO    | ✅ [GEMINI] Fallback success with gemini-3.5-flash-lite | audit={'requested_model': 'gemini-3.5-flash-lite', 'latency_ms': 4815, 'error_type': None, 'success': True, 'status_code': 200, 'token_usage': {'promptTokenCount': 840, 'candidatesTokenCount': 1065, 'totalTokenCount': 1905, 'promptTokensDetails': [{'modality': 'TEXT', 'tokenCount': 840}], 'serviceTier': 'standard'}, 'resolved_model': 'gemini-3.5-flash-lite', 'fallback_trigger': True, 'original_error': 'HTTP_429'}
+2026-08-18T13:48:54Z | INFO    | [PLAN_CREATED] {"goal": "Maximalkan keuntungan legal untuk pemilik melalui trading, pendapatan online, at..."}
+2026-08-18T13:48:54Z | INFO    | [ACTION_STARTED] {"task": "validate_active_core", "dry_run": false}
+2026-08-18T13:48:54Z | INFO    | [VALIDATION_STARTED] {"path": "/home/runner/work/IDX/IDX/self_evolving_agent.py"}
+2026-08-18T13:48:54Z | INFO    | [VALIDATION_SUCCESS] {"path": "/home/runner/work/IDX/IDX/self_evolving_agent.py"}
+2026-08-18T13:48:54Z | INFO    | [ACTION_COMPLETED] {"task": "validate_active_core", "status": "completed"}
+2026-08-18T13:48:54Z | INFO    | [LOOP_ITERATION] {"iteration": 3}
+2026-08-18T13:48:55Z | INFO    | [ENVIRONMENT_DISCOVERED] {"summary": {"os": "Linux", "python": [3, 11, 15], "cwd": "/home/runner/work/IDX/IDX", "git": true, "network": true}}
+2026-08-18T13:48:55Z | INFO    | [REPOSITORY_DISCOVERED] {"summary": {"root": "/home/runner/work/IDX/IDX", "files": 38, "languages": {"python": 22, "unknown": 12, "json": 2, "markdown": 1, "text": 1}, "entrypoints": ["main.py", "self_evolving_agent.py"]}}
+2026-08-18T13:48:55Z | INFO    | [CAPABILITY_DISCOVERED] {"capabilities": {"filesystem_read": true, "filesystem_write": true, "subprocess": true, "network": true, "git": true, "git_in_repo": true, "github_cli": true, "github_authenticated": false, "docker": true, "python_package_install": true, "research": true, "self_modify": true, "ci": true}}
+2026-08-18T13:48:55Z | INFO    | 🎯 [GEMINI] Trying model: gemini-3.6-flash
+2026-08-18T13:48:55Z | WARNING | ⚠️ [GEMINI] Falling back to gemini-3.5-flash-lite
+2026-08-18T13:49:00Z | INFO    | ✅ [GEMINI] Fallback success with gemini-3.5-flash-lite | audit={'requested_model': 'gemini-3.5-flash-lite', 'latency_ms': 4866, 'error_type': None, 'success': True, 'status_code': 200, 'token_usage': {'promptTokenCount': 840, 'candidatesTokenCount': 1129, 'totalTokenCount': 1969, 'promptTokensDetails': [{'modality': 'TEXT', 'tokenCount': 840}], 'serviceTier': 'standard'}, 'resolved_model': 'gemini-3.5-flash-lite', 'fallback_trigger': True, 'original_error': 'HTTP_429'}
+2026-08-18T13:49:00Z | INFO    | [PLAN_CREATED] {"goal": "Maximalkan keuntungan legal untuk pemilik melalui trading, pendapatan online, at..."}
+2026-08-18T13:49:00Z | INFO    | [EVOLUTION_STARTED] {"objective": "Maximalkan keuntungan legal untuk pemilik melalui trading, pendapatan online, atau peluang legal lainnya. Gunakan riset internet dan self-evolution untuk menemukan serta mengeksekusi strategi terbaik."}
+2026-08-18T13:49:00Z | INFO    | [CANDIDATE_CREATED] {"generation": "G000011", "path": "/home/runner/work/IDX/IDX/.god_entity_candidates/candidate_generation_G000011.py"}
+2026-08-18T13:49:00Z | INFO    | [RESEARCH_STARTED] {"query": "Maximalkan keuntungan legal untuk pemilik melalui trading, pendapatan online, atau peluang legal lainnya. Gunakan riset internet dan self-evolution untuk menemukan serta mengeksekusi strategi terbaik."}
+2026-08-18T13:49:00Z | INFO    | [RESEARCH_COMPLETED] {"query": "Maximalkan keuntungan legal untuk pemilik melalui trading, pendapatan online, atau peluang legal lainnya. Gunakan riset internet dan self-evolution untuk menemukan serta mengeksekusi strategi terbaik.", "results": 0}
+2026-08-18T13:49:00Z | INFO    | 🎯 [GEMINI] Trying model: gemini-3.6-flash
+2026-08-18T13:49:00Z | WARNING | ⚠️ [GEMINI] Falling back to gemini-3.5-flash-lite
+2026-08-18T13:49:03Z | INFO    | ✅ [GEMINI] Fallback success with gemini-3.5-flash-lite | audit={'requested_model': 'gemini-3.5-flash-lite', 'latency_ms': 2357, 'error_type': None, 'success': True, 'status_code': 200, 'token_usage': {'promptTokenCount': 127, 'candidatesTokenCount': 658, 'totalTokenCount': 785, 'promptTokensDetails': [{'modality': 'TEXT', 'tokenCount': 127}], 'serviceTier': 'standard'}, 'resolved_model': 'gemini-3.5-flash-lite', 'fallback_trigger': True, 'original_error': 'HTTP_429'}
+2026-08-18T13:49:03Z | INFO    | ✅ LLM enhancement appended (2750 chars)
+2026-08-18T13:49:03Z | INFO    | 🎯 [GEMINI] Trying model: gemini-3.6-flash
+2026-08-18T13:49:03Z | WARNING | ⚠️ [GEMINI] Falling back to gemini-3.5-flash-lite
+2026-08-18T13:49:05Z | INFO    | ✅ [GEMINI] Fallback success with gemini-3.5-flash-lite | audit={'requested_model': 'gemini-3.5-flash-lite', 'latency_ms': 1994, 'error_type': None, 'success': True, 'status_code': 200, 'token_usage': {'promptTokenCount': 158, 'candidatesTokenCount': 381, 'totalTokenCount': 539, 'promptTokensDetails': [{'modality': 'TEXT', 'tokenCount': 158}], 'serviceTier': 'standard'}, 'resolved_model': 'gemini-3.5-flash-lite', 'fallback_trigger': True, 'original_error': 'HTTP_429'}
+2026-08-18T13:49:05Z | INFO    | ✅ Workspace modifications: ['created:autonomous_wealth_engine.py']
+2026-08-18T13:49:05Z | INFO    | [VALIDATION_STARTED] {"path": "/home/runner/work/IDX/IDX/.god_entity_candidates/candidate_generation_G000011.py"}
+2026-08-18T13:49:05Z | INFO    | [VALIDATION_SUCCESS] {"path": "/home/runner/work/IDX/IDX/.god_entity_candidates/candidate_generation_G000011.py"}
+2026-08-18T13:49:05Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-18T13:49:06Z | INFO    | [ENVIRONMENT_DISCOVERED] {"summary": {"os": "Linux", "python": [3, 11, 15], "cwd": "/home/runner/work/IDX/IDX", "git": true, "network": true}}
+2026-08-18T13:49:06Z | INFO    | [REPOSITORY_DISCOVERED] {"summary": {"root": "/home/runner/work/IDX/IDX", "files": 39, "languages": {"python": 23, "unknown": 12, "json": 2, "markdown": 1, "text": 1}, "entrypoints": ["main.py", "self_evolving_agent.py"]}}
+2026-08-18T13:49:06Z | INFO    | [CAPABILITY_DISCOVERED] {"capabilities": {"filesystem_read": true, "filesystem_write": true, "subprocess": true, "network": true, "git": true, "git_in_repo": true, "github_cli": true, "github_authenticated": false, "docker": true, "python_package_install": true, "research": true, "self_modify": true, "ci": true}}
+2026-08-18T13:49:06Z | INFO    | Selected model provider: gemini
+2026-08-18T13:49:06Z | INFO    | 👤 [CREATOR] Identitas kreator dimuat dari environment variables.
+2026-08-18T13:49:06Z | INFO    | [RECOVERY_STARTED] {}
+2026-08-18T13:49:06Z | INFO    | [RECOVERY_COMPLETED] {"report": {"action": "active_generation_present", "details": ["discard_incomplete_candidate:G000011", "G000010"]}}
+2026-08-18T13:49:06Z | INFO    | [GOAL_RECEIVED] {"goal": "Maximalkan keuntungan legal untuk pemilik melalui trading, pendapatan online, at..."}
+2026-08-18T13:49:06Z | INFO    | 🎯 [PROFIT_MISSION] Goal disetel (tanpa ekspos identitas lengkap)
+2026-08-18T13:49:06Z | INFO    | [BOOT_COMPLETE] {"report_summary": {"provider": "gemini", "network": true, "git": true, "active_gen": "G000010"}}
+2026-08-18T13:49:06Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": ".god_entity_memory.db"}
+2026-08-18T13:49:06Z | INFO    | [GENERATION_PROMOTED] {"generation": "G000011", "hash": "a22beaa93b0882ab913e1cd1db54452150c384f239aabb4865020f88bce32386"}
+2026-08-18T13:49:06Z | INFO    | [LOOP_ITERATION] {"iteration": 4}
+2026-08-18T13:49:07Z | INFO    | [ENVIRONMENT_DISCOVERED] {"summary": {"os": "Linux", "python": [3, 11, 15], "cwd": "/home/runner/work/IDX/IDX", "git": true, "network": true}}
+2026-08-18T13:49:07Z | INFO    | [REPOSITORY_DISCOVERED] {"summary": {"root": "/home/runner/work/IDX/IDX", "files": 39, "languages": {"python": 23, "unknown": 12, "json": 2, "markdown": 1, "text": 1}, "entrypoints": ["main.py", "self_evolving_agent.py"]}}
+2026-08-18T13:49:07Z | INFO    | [CAPABILITY_DISCOVERED] {"capabilities": {"filesystem_read": true, "filesystem_write": true, "subprocess": true, "network": true, "git": true, "git_in_repo": true, "github_cli": true, "github_authenticated": false, "docker": true, "python_package_install": true, "research": true, "self_modify": true, "ci": true}}
+2026-08-18T13:49:07Z | INFO    | 🎯 [GEMINI] Trying model: gemini-3.6-flash
+2026-08-18T13:49:07Z | WARNING | ⚠️ [GEMINI] Falling back to gemini-3.5-flash-lite
+2026-08-18T13:49:11Z | INFO    | ✅ [GEMINI] Fallback success with gemini-3.5-flash-lite | audit={'requested_model': 'gemini-3.5-flash-lite', 'latency_ms': 4050, 'error_type': None, 'success': True, 'status_code': 200, 'token_usage': {'promptTokenCount': 836, 'candidatesTokenCount': 832, 'totalTokenCount': 1668, 'promptTokensDetails': [{'modality': 'TEXT', 'tokenCount': 836}], 'serviceTier': 'standard'}, 'resolved_model': 'gemini-3.5-flash-lite', 'fallback_trigger': True, 'original_error': 'HTTP_429'}
+2026-08-18T13:49:11Z | INFO    | [PLAN_CREATED] {"goal": "Maximalkan keuntungan legal untuk pemilik melalui trading, pendapatan online, at..."}
+2026-08-18T13:49:11Z | INFO    | [ACTION_STARTED] {"task": "validate_active_core", "dry_run": false}
+2026-08-18T13:49:11Z | INFO    | [VALIDATION_STARTED] {"path": "/home/runner/work/IDX/IDX/self_evolving_agent.py"}
+2026-08-18T13:49:11Z | INFO    | [VALIDATION_SUCCESS] {"path": "/home/runner/work/IDX/IDX/self_evolving_agent.py"}
+2026-08-18T13:49:11Z | INFO    | [ACTION_COMPLETED] {"task": "validate_active_core", "status": "completed"}

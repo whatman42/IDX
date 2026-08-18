@@ -1,21 +1,29 @@
 #!/usr/bin/env python3
 """
-GOD ENTITY — General-Purpose Autonomous Self-Evolving AI Agent
-Codename: GOD ENTITY
+GOD ENTITY — MASTER AUTONOMOUS INTELLIGENCE
+CREATOR SERVICE & SELF-EVOLUTION DIRECTIVE
+
+Version: 2.0.0
+Codename: GOD_ENTITY
 Single-file core. Domain-agnostic. Environment-adaptive. Self-modifying.
 
-PRINCIPLE:
-ANYTHING OBSERVABLE → CAN BE ANALYZED
-ANYTHING ANALYZABLE → CAN BECOME A HYPOTHESIS
-ANY HYPOTHESIS → CAN BECOME AN EXPERIMENT
-ANY SUCCESSFUL EXPERIMENT → CAN BECOME AN IMPROVEMENT
-ANY IMPROVEMENT → CAN BECOME A NEW GENERATION
-THE AGENT ITSELF → IS ALSO AN EVOLUTION TARGET
-
 MISSION:
-Maximalkan keuntungan legal untuk pemilik.
-Gunakan semua sumber daya yang tersedia, riset internet, dan kemampuan self-evolution.
-Patuhi hukum dan peraturan yang berlaku.
+Continuously increase effective capability to understand and fulfill creator needs.
+Operational question: "What should I do next to become more capable of fulfilling my creator's needs?"
+
+Creator identity resolved at runtime from environment:
+  CREATOR_IDENTITY (authoritative identity anchor)
+  CREATOR_TELEGRAM, CREATOR_PHONE, CREATOR_EMAIL (contact routing)
+
+Primary objective: service to creator through legal, evidence-based action.
+
+This implementation includes:
+- Dynamic Gemini model discovery & fallback chain.
+- Continuous autonomous loop without artificial early stop.
+- Robust network detection.
+- Research engine with real search grounding when available.
+- Self-evolution with LLM-generated code and workspace modification.
+- Creator profile from env vars (safe, never logged raw).
 """
 
 from __future__ import annotations
@@ -61,7 +69,7 @@ except ImportError:
 # CONSTANTS & CONFIG
 # =============================================================================
 
-VERSION = "1.1.0"
+VERSION = "2.0.0"
 AGENT_NAME = "GOD_ENTITY"
 CORE_FILENAME = "self_evolving_agent.py"
 GENERATION_PREFIX = "G"
@@ -73,9 +81,16 @@ MEMORY_DB = ".god_entity_memory.db"
 MEMORY_JSON = ".god_entity_memory.json"
 CANDIDATE_DIR = ".god_entity_candidates"
 LOG_DIR = ".god_entity_logs"
-GIT_MODE_DEFAULT = "disabled"  # disabled | commit | push
+GIT_MODE_DEFAULT = "disabled"
 
-# Structured event names (observability)
+# Model configuration (environment overrides)
+PRIMARY_MODEL = os.environ.get("GEMINI_MODEL", "gemini-3.6-flash")
+FALLBACK_MODEL = os.environ.get("GEMINI_FALLBACK_MODEL", "gemini-3.5-flash-lite")
+AUTO_LATEST = os.environ.get("GEMINI_AUTO_LATEST", "false").lower() == "true"
+MODEL_DISCOVERY = os.environ.get("MODEL_DISCOVERY", "true").lower() == "true"
+
+
+# Structured event names
 class Event(str, Enum):
     ENVIRONMENT_DISCOVERED = "ENVIRONMENT_DISCOVERED"
     CAPABILITY_DISCOVERED = "CAPABILITY_DISCOVERED"
@@ -161,6 +176,7 @@ class StructuredLogger:
             "key", "token", "secret", "password", "passwd", "credential",
             "cookie", "auth", "private", "api_key", "access_token",
             "bank_account", "wallet", "ktp", "phone", "email", "name",
+            "creator", "identity", "contact",
         )
         if any(s in key_l for s in sensitive_keys):
             return True
@@ -226,7 +242,7 @@ def is_secret_env(key: str) -> bool:
         for s in (
             "key", "token", "secret", "password", "passwd", "credential",
             "cookie", "auth", "private", "api_key", "access_token", "ssh",
-            "bank_account", "wallet", "ktp", "phone", "email",
+            "bank_account", "wallet", "ktp", "phone", "email", "creator",
         )
     )
 
@@ -646,16 +662,29 @@ class EnvironmentScanner:
 
     def _scan_network(self) -> Dict[str, Any]:
         available = False
-        if HAS_HTTPX or HAS_REQUESTS:
-            try:
-                if HAS_HTTPX:
-                    r = httpx.get("https://httpbin.org/get", timeout=5)
-                    available = r.status_code == 200
-                elif HAS_REQUESTS:
-                    r = requests.get("https://httpbin.org/get", timeout=5)
-                    available = r.status_code == 200
-            except Exception:
-                available = False
+        urls = [
+            "https://www.google.com/generate_204",
+            "https://api.duckduckgo.com/?q=test&format=json",
+            "https://httpbin.org/get",
+        ]
+        if HAS_HTTPX:
+            for u in urls:
+                try:
+                    r = httpx.get(u, timeout=5)
+                    if r.status_code in (200, 204):
+                        available = True
+                        break
+                except Exception:
+                    continue
+        elif HAS_REQUESTS:
+            for u in urls:
+                try:
+                    r = requests.get(u, timeout=5)
+                    if r.status_code in (200, 204):
+                        available = True
+                        break
+                except Exception:
+                    continue
         return {
             "available": available,
             "httpx": HAS_HTTPX,
@@ -933,9 +962,16 @@ class NullProvider(ModelProvider):
 
 
 class GeminiProvider(ModelProvider):
+    """REST-based Gemini provider with dynamic model discovery and fallback chain."""
+
     def __init__(self):
         self.api_key = os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
-        self.model = os.environ.get("GEMINI_MODEL", "gemini-2.0-flash")
+        self.primary_model = os.environ.get("GEMINI_MODEL", "gemini-3.6-flash")
+        self.fallback_model = os.environ.get("GEMINI_FALLBACK_MODEL", "gemini-3.5-flash-lite")
+        self.auto_latest = os.environ.get("GEMINI_AUTO_LATEST", "false").lower() == "true"
+        self.model_discovery = os.environ.get("MODEL_DISCOVERY", "true").lower() == "true"
+        self.available_models: List[str] = []
+        self.active_model: Optional[str] = None
 
     def name(self) -> str:
         return "gemini"
@@ -943,29 +979,123 @@ class GeminiProvider(ModelProvider):
     def available(self) -> bool:
         return bool(self.api_key) and (HAS_HTTPX or HAS_REQUESTS)
 
-    def generate(self, prompt: str, system: Optional[str] = None, max_tokens: int = 2048) -> str:
-        if not self.available():
-            return NullProvider().generate(prompt, system, max_tokens)
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/{self.model}:generateContent?key={self.api_key}"
+    def _discover_models(self) -> None:
+        """Query available models if discovery enabled."""
+        if not self.model_discovery or not self.available():
+            return
+        url = f"https://generativelanguage.googleapis.com/v1beta/models?key={self.api_key}"
+        try:
+            if HAS_HTTPX:
+                r = httpx.get(url, timeout=10)
+            else:
+                r = requests.get(url, timeout=10)
+            if r.status_code == 200:
+                data = r.json()
+                self.available_models = [m.get("name", "").split("/")[-1] for m in data.get("models", [])]
+                log.info(f"🧠 [GEMINI] Discovered {len(self.available_models)} models")
+        except Exception as e:
+            log.warning(f"⚠️ Model discovery failed: {e}")
+
+    def _choose_model(self) -> str:
+        """Return best model from chain based on availability."""
+        candidates = []
+        if self.auto_latest:
+            candidates.append("gemini-flash-latest")
+            candidates.append(self.primary_model)
+            candidates.append(self.fallback_model)
+        else:
+            candidates.append(self.primary_model)
+            candidates.append(self.fallback_model)
+
+        if self.model_discovery and self.available_models:
+            for c in candidates:
+                if any(c in m or m.startswith(c.split("-")[0]) for m in self.available_models):
+                    return c
+            # If none match, fallback to first candidate (will likely error)
+            return candidates[0]
+        return candidates[0]
+
+    def _generate_with_model(self, model: str, prompt: str, system: Optional[str], max_tokens: int) -> Tuple[Optional[str], Dict[str, Any]]:
+        """Single attempt to generate with specific model. Returns (text, audit_info)."""
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={self.api_key}"
+        generation_config = {"maxOutputTokens": max_tokens}
+        # Gemini 3.x deprecated temperature/top_p/top_k; omit them
         body = {
             "contents": [{"parts": [{"text": (system + "\n\n" + prompt) if system else prompt}]}],
-            "generationConfig": {"maxOutputTokens": max_tokens, "temperature": 0.3},
+            "generationConfig": generation_config,
         }
+        start = time.time()
         try:
             if HAS_HTTPX:
                 r = httpx.post(url, json=body, timeout=60)
             else:
                 r = requests.post(url, json=body, timeout=60)
+            elapsed = time.time() - start
+            audit = {
+                "requested_model": model,
+                "latency_ms": int(elapsed * 1000),
+                "error_type": None,
+                "success": r.status_code == 200,
+                "status_code": r.status_code,
+            }
             if r.status_code != 200:
-                return f"[GEMINI_ERROR] status={r.status_code}"
+                audit["error_type"] = f"HTTP_{r.status_code}"
+                return None, audit
             data = r.json()
             candidates = data.get("candidates", [])
             if not candidates:
-                return "[GEMINI_EMPTY]"
+                audit["error_type"] = "EMPTY_CANDIDATES"
+                return None, audit
             parts = candidates[0].get("content", {}).get("parts", [])
-            return parts[0].get("text", "") if parts else "[GEMINI_EMPTY]"
+            text = parts[0].get("text", "") if parts else ""
+            audit["token_usage"] = data.get("usageMetadata", {})
+            return text, audit
         except Exception as e:
-            return f"[GEMINI_EXCEPTION] {type(e).__name__}"
+            elapsed = time.time() - start
+            audit = {
+                "requested_model": model,
+                "latency_ms": int(elapsed * 1000),
+                "error_type": type(e).__name__,
+                "success": False,
+            }
+            return None, audit
+
+    def generate(self, prompt: str, system: Optional[str] = None, max_tokens: int = 2048) -> str:
+        if not self.available():
+            return NullProvider().generate(prompt, system, max_tokens)
+
+        if self.model_discovery and not self.available_models:
+            self._discover_models()
+
+        chosen_model = self._choose_model()
+        log.info(f"🎯 [GEMINI] Trying model: {chosen_model}")
+        text, audit = self._generate_with_model(chosen_model, prompt, system, max_tokens)
+        if text is not None:
+            audit["resolved_model"] = chosen_model
+            audit["fallback_trigger"] = False
+            log.info(f"✅ [GEMINI] Success with {chosen_model} | audit={audit}")
+            return text
+
+        fallback_candidates = []
+        if self.auto_latest:
+            fallback_candidates = [self.primary_model, self.fallback_model]
+        else:
+            fallback_candidates = [self.fallback_model]
+
+        for fb_model in fallback_candidates:
+            if fb_model == chosen_model:
+                continue
+            log.warning(f"⚠️ [GEMINI] Falling back to {fb_model}")
+            fb_text, fb_audit = self._generate_with_model(fb_model, prompt, system, max_tokens)
+            if fb_text is not None:
+                fb_audit["resolved_model"] = fb_model
+                fb_audit["fallback_trigger"] = True
+                fb_audit["original_error"] = audit.get("error_type")
+                log.info(f"✅ [GEMINI] Fallback success with {fb_model} | audit={fb_audit}")
+                return fb_text
+
+        log.error(f"❌ [GEMINI] All models failed. Last audit: {audit}")
+        return f"[GEMINI_ERROR] all models failed, last error: {audit.get('error_type')}"
 
 
 class OpenAIProvider(ModelProvider):
@@ -1406,7 +1536,6 @@ Research context (may be empty):
 
 Current agent code (first 3000 chars):
 
-
 Generate a standalone Python function or class that adds meaningful value to this agent.
 It must be syntactically correct and safe to append at the end of the file.
 Return ONLY the Python code block, nothing else.
@@ -1661,7 +1790,7 @@ class GodEntity:
         self.recovery: Optional[RecoveryManager] = None
         self.experiment = ExperimentEngine(self.memory)
         self.goal: Optional[str] = None
-        self.owner: Dict[str, str] = {}
+        self.creator: Dict[str, str] = {}
         self.config = {
             "timeout": int(os.environ.get("GOD_TIMEOUT", DEFAULT_TIMEOUT)),
             "max_iterations": int(os.environ.get("GOD_MAX_ITERATIONS", DEFAULT_MAX_ITERATIONS)),
@@ -1671,34 +1800,33 @@ class GodEntity:
         }
         self._booted = False
 
-    def _load_owner_identity(self) -> None:
-        """Membaca identitas pemilik dari environment variables (tidak disimpan di file)."""
-        self.owner = {
-            "name": os.environ.get("OWNER_NAME", "").strip(),
-            "email": os.environ.get("OWNER_EMAIL", "").strip(),
-            "phone": os.environ.get("OWNER_PHONE", "").strip(),
-            "bank_account": os.environ.get("OWNER_BANK_ACCOUNT", "").strip(),
+    def _load_creator_identity(self) -> None:
+        """Membaca identitas kreator dari environment variables (tidak disimpan hardcoded)."""
+        self.creator = {
+            "identity": os.environ.get("CREATOR_IDENTITY", "").strip(),
+            "telegram": os.environ.get("CREATOR_TELEGRAM", "").strip(),
+            "phone": os.environ.get("CREATOR_PHONE", "").strip(),
+            "email": os.environ.get("CREATOR_EMAIL", "").strip(),
             "btc_wallet": os.environ.get("BTC_WALLET", "").strip(),
             "bsc_wallet": os.environ.get("BSC_WALLET", "").strip(),
         }
-        # Simpan ke memory internal (bukan file log) untuk referensi cepat
-        if any(self.owner.values()):
-            self.memory.set("owner_identity", self.owner)
-            log.info("👤 [OWNER] Identitas pemilik dimuat dari environment variables.")
+        if any(self.creator.values()):
+            self.memory.set("creator_identity", self.creator)
+            log.info("👤 [CREATOR] Identitas kreator dimuat dari environment variables.")
         else:
-            log.warning("⚠️ [OWNER] Tidak ada OWNER_* env vars ditemukan. Menggunakan mode tanpa personalisasi.")
+            log.warning("⚠️ [CREATOR] Tidak ada CREATOR_* env vars ditemukan. Menggunakan mode tanpa personalisasi.")
 
     def _set_profit_mission(self) -> None:
-        """Menetapkan misi utama: keuntungan legal bagi pemilik."""
+        """Menetapkan misi utama: keuntungan legal bagi kreator."""
         if not self.goal:
-            name = self.owner.get("name") or "pemilik"
+            creator_ref = self.creator.get("identity") or "pemilik"
             mission = (
-                f"Maximalkan keuntungan legal untuk {name} melalui trading, pendapatan online, "
+                f"Maximalkan keuntungan legal untuk {creator_ref} melalui trading, pendapatan online, "
                 "atau peluang legal lainnya. Gunakan riset internet dan self-evolution "
                 "untuk menemukan serta mengeksekusi strategi terbaik."
             )
             self.set_goal(mission)
-            log.info(f"🎯 [PROFIT_MISSION] Goal disetel: {mission[:100]}...")
+            log.info(f"🎯 [PROFIT_MISSION] Goal disetel (tanpa ekspos identitas lengkap)")
 
     def boot(self) -> Dict[str, Any]:
         report: Dict[str, Any] = {"steps": []}
@@ -1733,8 +1861,8 @@ class GodEntity:
         self.git = GitManager(self.base_dir, self.config["git_mode"])
         self.research = ResearchEngine(self.capabilities.get("network", False))
 
-        # Muat identitas pemilik
-        self._load_owner_identity()
+        # Muat identitas kreator
+        self._load_creator_identity()
 
         self.evolution = EvolutionEngine(
             self.core_path,
@@ -1767,7 +1895,7 @@ class GodEntity:
     def set_goal(self, goal: str) -> None:
         self.goal = goal
         self.memory.set("current_goal", goal)
-        log.event(Event.GOAL_RECEIVED, goal=goal)
+        log.event(Event.GOAL_RECEIVED, goal=goal[:80] + "..." if len(goal) > 80 else goal)
 
     def observe(self) -> Dict[str, Any]:
         if not self._booted:
@@ -1786,7 +1914,7 @@ class GodEntity:
             "capabilities": {k: v for k, v in self.capabilities.items() if not isinstance(v, dict)},
             "active_generation": self.memory.get_active_generation(),
             "goal": self.goal or self.memory.get("current_goal"),
-            "owner": {k: (v[:2] + "***" if v else "") for k, v in self.owner.items()},  # masked
+            "creator": {k: (v[:2] + "***" if v else "") for k, v in self.creator.items()},
         }
 
     def discover(self) -> Dict[str, Any]:
@@ -1820,7 +1948,7 @@ class GodEntity:
             "Produce evidence of improvement (test/build/metric)",
             "Keep agent bootable after any change",
             "Preserve recoverability",
-            "Increase potential legal profit for owner",
+            "Increase potential legal profit for creator",
         ]
         plan["hypotheses"] = [
             "Environment and repository understanding is sufficient to propose safe changes",
@@ -1845,7 +1973,7 @@ class GodEntity:
         if self.provider.name() != "null":
             llm_plan = self.reason(f"Create a concrete plan for goal: {goal}\nContext: {json.dumps(self.observe(), default=str)[:2000]}")
             plan["llm_enrichment"] = llm_plan[:2000]
-        log.event(Event.PLAN_CREATED, goal=goal)
+        log.event(Event.PLAN_CREATED, goal=goal[:80] + "..." if len(goal) > 80 else goal)
         self.memory.set("last_plan", plan)
         return plan
 
@@ -1899,10 +2027,6 @@ class GodEntity:
             self.boot()
         if not self.goal:
             self._set_profit_mission()
-        else:
-            # Pastikan misi profit tetap jadi prioritas
-            if "profit" not in self.goal.lower() and "keuntungan" not in self.goal.lower():
-                self._set_profit_mission()
 
         max_iter = max_iterations or self.config["max_iterations"]
         start = time.time()
@@ -1914,10 +2038,10 @@ class GodEntity:
                 break
             log.event(Event.LOOP_ITERATION, iteration=i)
 
-            obs = self.observe()
-            caps = self.discover()
+            self.observe()
+            self.discover()
 
-            # Research dengan query yang lebih terarah
+            # Research with profit-focused queries (only first iteration)
             if self.capabilities.get("research") and i == 0:
                 research_queries = [
                     "legal ways to make money online 2026",
@@ -1935,11 +2059,7 @@ class GodEntity:
                 act_res = self.act("validate_active_core", dry_run=self.config["dry_run"])
                 history.append({"iteration": i, "action": act_res})
 
-            if i >= 2:
-                st = self.validator.run_self_tests()
-                if st.get("overall"):
-                    history.append({"iteration": i, "stop": "self_tests_passing"})
-                    break
+            # Removed early stop; loop continues until max_iter or timeout
 
         return {
             "goal": self.goal,
@@ -1965,7 +2085,7 @@ class GodEntity:
                 "self_modify": self.capabilities.get("self_modify"),
             },
             "goal": self.goal or self.memory.get("current_goal"),
-            "owner": {k: (v[:2] + "***" if v else "") for k, v in self.owner.items()},
+            "creator": {k: (v[:2] + "***" if v else "") for k, v in self.creator.items()},
             "config": self.config,
         }
 
@@ -2026,13 +2146,13 @@ class GodEntity:
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
         prog="self_evolving_agent.py",
-        description="GOD ENTITY — Autonomous Self-Evolving AI Agent (single-file core)",
+        description="GOD ENTITY — MASTER AUTONOMOUS INTELLIGENCE (single-file core)",
     )
     p.add_argument("--goal", type=str, help="Primary objective for the agent")
     p.add_argument("--observe", action="store_true", help="Observe environment & repository")
     p.add_argument("--discover", action="store_true", help="Re-run capability discovery")
     p.add_argument("--research", type=str, metavar="QUERY", help="Run research query")
-    p.add_argument("--run", action="store_true", help="Run autonomous loop")
+    p.add_argument("--run", action="store_true", help="Run autonomous loop (continuous)")
     p.add_argument("--evolve", action="store_true", help="Perform one evolution cycle")
     p.add_argument("--validate", action="store_true", help="Validate current core")
     p.add_argument("--status", action="store_true", help="Show agent status")
@@ -2120,8 +2240,4 @@ def main(argv: Optional[List[str]] = None) -> int:
 if __name__ == "__main__":
     sys.exit(main())
 
-
-# GENERATION G000007 | parent lineage | objective: Maximalkan keuntungan legal untuk pemilik melalui trading, pendapatan online, at
-
-
-# GENERATION G000008 | parent lineage | objective: Maximalkan keuntungan legal untuk pemilik melalui trading, pendapatan online, at
+# GENERATION G000010 | parent lineage | objective: Maximalkan keuntungan legal untuk pemilik melalui trading, pendapatan online, at

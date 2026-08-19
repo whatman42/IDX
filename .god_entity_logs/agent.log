@@ -30169,3 +30169,341 @@
 2026-08-19T12:38:17Z | INFO    | [VALIDATION_FAILED] {"path": "/home/runner/work/IDX/IDX/.god_entity_candidates/candidate_generation_G000043.py"}
 2026-08-19T12:38:17Z | INFO    | [VALIDATION_FAILED] {"path": "/home/runner/work/IDX/IDX/self_evolving_agent.py"}
 2026-08-19T12:38:17Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:22:17Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/agent_runtime/.god_entity_memory.db"}
+2026-08-19T14:23:32Z | INFO    | [ENVIRONMENT_DISCOVERED] {"summary": {"os": "Linux", "python": [3, 11, 15], "cwd": "/home/runner/work/IDX/IDX", "git": true, "network": true}}
+2026-08-19T14:23:32Z | INFO    | [REPOSITORY_DISCOVERED] {"summary": {"root": "/home/runner/work/IDX/IDX/agent_runtime", "files": 0, "languages": {}, "entrypoints": []}}
+2026-08-19T14:23:32Z | INFO    | [CAPABILITY_DISCOVERED] {"capabilities": {"filesystem_read": true, "filesystem_write": true, "subprocess": true, "network": true, "git": true, "git_in_repo": true, "github_cli": true, "github_authenticated": false, "docker": true, "python_package_install": true, "research": true, "research_functional": false, "self_modify": true, "ci": true}}
+2026-08-19T14:23:32Z | INFO    | Selected model provider: gemini
+2026-08-19T14:23:32Z | INFO    | [RECOVERY_STARTED] {}
+2026-08-19T14:23:32Z | INFO    | [RECOVERY_COMPLETED] {"action": "created_initial_generation"}
+2026-08-19T14:23:32Z | INFO    | [SELF_HEALING_STARTED] {}
+2026-08-19T14:25:33Z | INFO    | [VALIDATION_FAILED] {"path": "/home/runner/work/IDX/IDX/sea.py"}
+2026-08-19T14:25:33Z | INFO    | [SELF_HEALING_COMPLETED] {"status": "failed_no_backup"}
+2026-08-19T14:25:33Z | INFO    | [BOOT_COMPLETE] {"provider": "gemini", "active_gen": "G000001"}
+2026-08-19T14:25:38Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:25:41Z | INFO    | [ENVIRONMENT_DISCOVERED] {"summary": {"os": "Linux", "python": [3, 11, 15], "cwd": "/home/runner/work/IDX/IDX", "git": true, "network": true}}
+2026-08-19T14:25:41Z | INFO    | [REPOSITORY_DISCOVERED] {"summary": {"root": "/home/runner/work/IDX/IDX", "files": 50, "languages": {"python": 34, "unknown": 12, "json": 2, "markdown": 1, "text": 1}, "entrypoints": ["sea.py", "main.py"]}}
+2026-08-19T14:25:41Z | INFO    | [CAPABILITY_DISCOVERED] {"capabilities": {"filesystem_read": true, "filesystem_write": true, "subprocess": true, "network": true, "git": true, "git_in_repo": true, "github_cli": true, "github_authenticated": false, "docker": true, "python_package_install": true, "research": true, "research_functional": false, "self_modify": true, "ci": true}}
+2026-08-19T14:25:41Z | INFO    | Selected model provider: gemini
+2026-08-19T14:25:41Z | INFO    | [RECOVERY_STARTED] {}
+2026-08-19T14:25:41Z | INFO    | [RECOVERY_COMPLETED] {"action": "active_generation_present"}
+2026-08-19T14:25:41Z | INFO    | [SELF_HEALING_STARTED] {}
+2026-08-19T14:25:41Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:25:42Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:25:42Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:25:43Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:25:43Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:25:43Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:25:44Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:25:44Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:25:45Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:25:45Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:25:45Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:25:46Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:25:46Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:25:47Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:25:47Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:25:48Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:25:48Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:25:48Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:25:49Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:25:49Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:25:50Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:25:50Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:25:51Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:25:51Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:25:51Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:25:52Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:25:52Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:25:53Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:25:53Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:25:53Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:25:54Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:25:54Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:25:55Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:25:55Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:25:55Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:25:56Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:25:56Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:25:57Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:25:57Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:25:58Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:25:58Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:25:58Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:25:59Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:25:59Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:25:59Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:00Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:00Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:01Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:01Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:02Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:02Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:02Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:03Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:03Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:03Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:04Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:04Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:05Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:05Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:05Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:06Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:06Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:07Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:07Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:08Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:08Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:08Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:09Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:09Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:09Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:10Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:10Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:11Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:11Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:12Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:12Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:12Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:13Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:13Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:14Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:14Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:14Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:15Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:15Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:16Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:16Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:16Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:17Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:17Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:17Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:18Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:18Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:19Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:19Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:20Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:20Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:20Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:21Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:21Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:22Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:22Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:22Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:23Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:23Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:24Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:24Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:24Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:25Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:25Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:26Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:26Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:26Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:27Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:27Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:28Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:28Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:29Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:29Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:29Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:30Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:30Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:31Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:31Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:32Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:32Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:32Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:33Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:33Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:34Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:34Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:34Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:35Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:35Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:36Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:36Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:36Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:37Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:37Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:37Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:38Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:38Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:38Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:38Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:39Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:39Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:39Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:40Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:40Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:40Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:41Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:41Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:41Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:42Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:42Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:42Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:43Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:43Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:43Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:44Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:44Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:44Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:45Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:45Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:46Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:46Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:46Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:47Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:47Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:48Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:48Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:48Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:49Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:49Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:49Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:50Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:50Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:50Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:51Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:51Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:52Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:52Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:52Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:53Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:53Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:54Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:54Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:54Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:55Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:55Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:56Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:56Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:56Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:57Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:57Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:58Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:58Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:58Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:59Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:59Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:26:59Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:27:00Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:27:00Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:27:00Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:27:01Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:27:01Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:27:02Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:27:02Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:27:02Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:27:03Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:27:03Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:27:03Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:27:04Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:27:04Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:27:05Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:27:05Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:27:05Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:27:06Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:27:06Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:27:07Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:27:07Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:27:07Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:27:08Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:27:08Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:27:09Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:27:09Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:27:10Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:27:10Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:27:10Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:27:11Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:27:11Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:27:12Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:27:12Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:27:12Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:27:13Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:27:13Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:27:14Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:27:14Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:27:15Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:27:15Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:27:16Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:27:16Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:27:17Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:27:17Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:27:18Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:27:18Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:27:18Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:27:19Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:27:19Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:27:20Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:27:20Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:27:21Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:27:21Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:27:22Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:27:22Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:27:23Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:27:23Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:27:24Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:27:24Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:27:25Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:27:25Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:27:26Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:27:26Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:27:27Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:27:27Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:27:28Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:27:28Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:27:29Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:27:30Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:27:30Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:27:31Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:27:31Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:27:32Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:27:32Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:27:33Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:27:33Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:27:34Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:27:34Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:27:34Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:27:35Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:27:36Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:27:36Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:27:38Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:27:39Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:27:39Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:27:39Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:27:40Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:27:40Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:27:41Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:27:41Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:27:42Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:27:42Z | INFO    | [VALIDATION_FAILED] {"path": "/home/runner/work/IDX/IDX/sea.py"}
+2026-08-19T14:27:42Z | INFO    | [SELF_HEALING_COMPLETED] {"status": "failed_no_backup"}
+2026-08-19T14:27:42Z | INFO    | [BOOT_COMPLETE] {"provider": "gemini", "active_gen": "G000021"}
+2026-08-19T14:27:42Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:27:43Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:27:44Z | INFO    | Decision: EXPLORE_ENV
+2026-08-19T14:27:44Z | INFO    | [VALIDATION_FAILED] {"path": "/home/runner/work/IDX/IDX/sea.py"}
+2026-08-19T14:27:44Z | INFO    | Environment exploration completed
+2026-08-19T14:27:44Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:27:44Z | INFO    | Decision: EXPLORE_ENV
+2026-08-19T14:27:44Z | INFO    | Environment exploration completed
+2026-08-19T14:27:44Z | INFO    | Decision: OPTIMIZE_SELF
+2026-08-19T14:27:44Z | INFO    | Self-optimization completed
+2026-08-19T14:27:45Z | INFO    | Decision: EXPLORE_ENV
+2026-08-19T14:27:45Z | INFO    | Environment exploration completed
+2026-08-19T14:27:45Z | INFO    | [VALIDATION_FAILED] {"path": "/home/runner/work/IDX/IDX/sea.py"}
+2026-08-19T14:27:45Z | INFO    | Decision: OPTIMIZE_SELF
+2026-08-19T14:27:45Z | INFO    | Self-optimization completed
+2026-08-19T14:27:45Z | INFO    | [VALIDATION_FAILED] {"path": "/home/runner/work/IDX/IDX/sea.py"}
+2026-08-19T14:27:45Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:27:46Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:27:46Z | INFO    | [VALIDATION_FAILED] {"path": "/home/runner/work/IDX/IDX/sea.py"}
+2026-08-19T14:27:46Z | INFO    | [VALIDATION_FAILED] {"path": "/home/runner/work/IDX/IDX/sea.py"}
+2026-08-19T14:27:46Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:27:46Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:27:47Z | INFO    | [VALIDATION_FAILED] {"path": "/home/runner/work/IDX/IDX/sea.py"}
+2026-08-19T14:27:47Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}
+2026-08-19T14:27:47Z | INFO    | [VALIDATION_FAILED] {"path": "/home/runner/work/IDX/IDX/sea.py"}
+2026-08-19T14:27:47Z | INFO    | [MEMORY_INITIALIZED] {"backend": "sqlite", "path": "/home/runner/work/IDX/IDX/.god_entity_memory.db"}

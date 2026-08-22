@@ -1,0 +1,681 @@
+# ==============================================================================
+# GitHub Actions Workflow: S.E.A. (Self-Evolving Agent)
+# File: .github/workflows/idx.yml
+# Version: v2026.Q3.SEA-AUTONOMOUS-PAT
+#
+# PURPOSE:
+#   Autonomous IDX analysis + self-evolving agent (sea.py) with FULL AUTHORITY.
+#   Menggunakan GH_PAT (Fine-Grained Personal Access Token) untuk operasi Git.
+#
+# EXECUTION:
+#   IDX trading = SIMULATION ONLY
+#   Live broker = DISABLED
+#
+# S.E.A. CAPABILITIES:
+#   - filesystem read/write (including delete/modify)
+#   - source modification (sea.py, main.py, modules)
+#   - self modification (evolves itself)
+#   - subprocess execution
+#   - network research (ddgs, Wikipedia)
+#   - local Git operations
+#   - autonomous generation lifecycle
+#   - persistent memory (SQLite)
+#   - generate/evolve modules (risk, features, portfolio, etc.)
+#   - refactor main.py workflow
+#   - cleanup unused files
+#
+# AUTHENTICATION:
+#   - Uses GH_PAT (Fine-Grained PAT) for checkout and push.
+#   - GITHUB_TOKEN default tidak digunakan untuk operasi Git agar tidak terbatas.
+# ==============================================================================
+
+name: S.E.A. Autonomous
+
+on:
+
+  # ============================================================================
+  # AUTOMATIC SCHEDULE (IDX Market Hours)
+  # ============================================================================
+
+  schedule:
+
+    # HEALTH CHECK
+    # 08:00 WIB = 01:00 UTC
+    - cron: '0 1 * * 1-5'
+
+    # SESSION I (09:00–12:00 WIB)
+    - cron: '*/15 2-4 * * 1-5'
+    - cron: '0 5 * * 1-5'
+
+    # SESSION II (13:30–15:45 WIB)
+    - cron: '30,45 6 * * 1-5'
+    - cron: '*/15 7-8 * * 1-5'
+
+    # POST-MARKET / SELF-LEARNING & EVOLUTION
+    # 16:15 WIB = 09:15 UTC
+    - cron: '15 9 * * 1-5'
+
+    # NIGHTLY DEEP EVOLUTION (01:00 WIB = 18:00 UTC)
+    - cron: '0 18 * * 1-5'
+
+  # ============================================================================
+  # MANUAL EXECUTION
+  # ============================================================================
+
+  workflow_dispatch:
+
+    inputs:
+
+      run_mode:
+        description: "Pilih mode eksekusi"
+        required: true
+        default: "god_entity"
+        type: choice
+        options:
+          - god_entity       # Full autonomous evolution + trading
+          - self_learning    # Self-learning only
+          - health_check     # Health check only
+          - reset            # Reset local state
+          - generate_modules # Generate all modules from scratch
+          - refactor_main    # Refactor main.py using AI
+
+
+# ==============================================================================
+# GLOBAL CONCURRENCY
+# ==============================================================================
+
+concurrency:
+  group: idx-production-global-lock
+  cancel-in-progress: false
+
+
+# ==============================================================================
+# WORKFLOW PERMISSIONS
+# ==============================================================================
+
+permissions:
+  contents: write
+
+
+# ==============================================================================
+# GLOBAL ENVIRONMENT
+# ==============================================================================
+
+env:
+
+  TZ: "Asia/Jakarta"
+
+  PYTHONUNBUFFERED: "1"
+
+  CI: "true"
+
+  IDX_MAX_STALENESS_SEC: "86400.0"
+
+  # ----------------------------------------------------------------------------
+  # TRADING DOMAIN STATE (Simulation Only)
+  # ----------------------------------------------------------------------------
+
+  IDX_SIMULATION_ONLY: "true"
+
+  LIVE_BROKER_ENABLED: "false"
+
+  # ----------------------------------------------------------------------------
+  # S.E.A. RUNTIME (Full Authority)
+  # ----------------------------------------------------------------------------
+
+  SEA_AUTONOMOUS: "true"
+
+  SEA_SELF_MODIFY: "true"
+
+  SEA_GIT: "true"
+
+  SEA_DRY_RUN: "false"
+
+  SEA_ALLOW_DELETE: "true"          # Izin hapus file (kecuali protected)
+
+  SEA_MODULE_GENERATION: "true"     # Generate modules via AI
+
+  SEA_WORKFLOW_REFACTOR: "true"     # Izinkan refactor main.py
+
+  # ----------------------------------------------------------------------------
+  # EVOLUTION PARAMETERS
+  # ----------------------------------------------------------------------------
+
+  AGENT_MAX_ITERATIONS: "5"
+
+  GOD_TIMEOUT: "300"
+
+  GIT_MODE: "disabled"              # commit/push diatur di workflow
+
+  # ----------------------------------------------------------------------------
+  # GEMINI (Primary + Fallback) — sudah di-handle di sea.py
+  # ----------------------------------------------------------------------------
+
+  GEMINI_MODEL: "gemini-3.6-flash"
+
+  GEMINI_FALLBACK_MODEL: "gemini-3.5-flash-lite"
+
+  MODEL_DISCOVERY: "true"
+
+
+# ==============================================================================
+# JOB
+# ==============================================================================
+
+jobs:
+
+  run-sea-pipeline:
+
+    name: S.E.A. Autonomous
+
+    runs-on: ubuntu-latest
+
+    timeout-minutes: 30
+
+
+    steps:
+
+      # ========================================================================
+      # 1. CHECKOUT (Menggunakan GH_PAT)
+      # ========================================================================
+
+      - name: Checkout Repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GH_PAT }}  # Menggunakan Fine-Grained PAT
+
+
+      # ========================================================================
+      # 2. PYTHON
+      # ========================================================================
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+
+      # ========================================================================
+      # 3. CACHE: Market Data + S.E.A. Memory
+      # ========================================================================
+
+      - name: Restore Persistent Caches
+        uses: actions/cache@0400d5f644dc74513175e3cd8d07132dd4860809
+        with:
+          path: |
+            .cache/
+            .sea_memory.db
+          key: sea-cache-${{ runner.os }}-py3.11-${{ github.run_id }}
+          restore-keys: |
+            sea-cache-${{ runner.os }}-py3.11-
+            sea-cache-${{ runner.os }}-
+
+
+      # ========================================================================
+      # 4. DEPENDENCIES
+      # ========================================================================
+
+      - name: Install Dependencies & Tools
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+
+          python -m pip install --upgrade pip
+
+          if [ -f requirements.txt ]; then
+            python -m pip install -r requirements.txt
+          else
+            python -m pip install \
+              polars \
+              numpy \
+              pandas \
+              yfinance \
+              requests \
+              httpx \
+              scipy \
+              scikit-learn \
+              joblib \
+              ddgs \
+              astor
+          fi
+
+          if ! command -v sqlite3 >/dev/null 2>&1; then
+            sudo apt-get update -y
+            sudo apt-get install -y sqlite3
+          fi
+
+
+      # ========================================================================
+      # 5. ACTION PINNING AUDIT
+      # ========================================================================
+
+      - name: Verify GitHub Actions SHA Pinning
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+
+          if grep -RInE \
+            'uses:[[:space:]]+[^@]+@(v[0-9]+|main|master|latest)' \
+            .github/workflows; then
+            echo "ERROR: Unpinned GitHub Action detected."
+            exit 1
+          fi
+          echo "✅ All GitHub Actions SHA pinned."
+
+
+      # ========================================================================
+      # 6. PYTHON COMPILATION GATE
+      # ========================================================================
+
+      - name: Python Syntax & Compilation Gate
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          python -m compileall -q .
+          echo "✅ Python compilation PASS."
+
+
+      # ========================================================================
+      # 7. RUNTIME DIRECTORIES
+      # ========================================================================
+
+      - name: Prepare Runtime Directories
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          mkdir -p .cache reports logs data storage models agent_runtime
+          touch .cache/.gitkeep reports/.gitkeep logs/.gitkeep data/.gitkeep storage/.gitkeep models/.gitkeep agent_runtime/.gitkeep
+          if [ ! -f prediksi_idx_log.csv ]; then
+            echo "timestamp,ticker,prediction_probability,prediction_confidence,signal_status" > prediksi_idx_log.csv
+          fi
+
+
+      # ========================================================================
+      # 8. UNIVERSE BOOTSTRAP
+      # ========================================================================
+
+      - name: Bootstrap Universe
+        env:
+          IDX_PROXY_URL: ${{ secrets.IDX_PROXY_URL }}
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          if [ ! -f universe.json ]; then
+            if python main.py --bootstrap-universe 2>/dev/null; then
+              echo "✅ universe.json created."
+            else
+              echo "ℹ️ Bootstrap CLI unavailable. Continuing."
+            fi
+          fi
+          if [ -f universe.json ]; then
+            echo "✅ Universe available."
+          else
+            echo "⚠️ universe.json unavailable."
+          fi
+
+
+      # ========================================================================
+      # 9. DETERMINE MODE
+      # ========================================================================
+
+      - name: Determine Execution Mode
+        id: mode
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+
+          MODE="${{ github.event.inputs.run_mode }}"
+
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            TRIGGER_CRON="${{ github.event.schedule }}"
+            case "$TRIGGER_CRON" in
+              "0 1 * * 1-5")     MODE="health_check" ;;
+              "15 9 * * 1-5")    MODE="self_learning" ;;
+              "0 18 * * 1-5")    MODE="god_entity" ;;
+              *)                 MODE="god_entity" ;;
+            esac
+          fi
+
+          [ -z "$MODE" ] && MODE="god_entity"
+
+          echo "Selected mode: $MODE"
+          echo "mode=$MODE" >> "$GITHUB_OUTPUT"
+
+
+      # ========================================================================
+      # 10. IDX PIPELINE (main.py — passive executor)
+      # ========================================================================
+
+      - name: Run IDX Pipeline
+        env:
+
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+
+          IDX_PROXY_URL: ${{ secrets.IDX_PROXY_URL }}
+
+          IDX_FETCH_TIMEOUT_SEC: "15.0"
+
+          IDX_SIMULATION_ONLY: "true"
+
+          LIVE_BROKER_ENABLED: "false"
+
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+
+          MODE="${{ steps.mode.outputs.mode }}"
+
+          echo "=============================================="
+          echo "IDX PIPELINE — MODE: $MODE"
+          echo "SIMULATION ONLY: $IDX_SIMULATION_ONLY"
+          echo "=============================================="
+
+          case "$MODE" in
+
+            reset)
+              python main.py --reset-dryrun
+              ;;
+
+            self_learning)
+              python main.py --self-learning --enable-self-evolving
+              ;;
+
+            generate_modules)
+              echo "Generating all modules from S.E.A..."
+              for mod in risk features portfolio prediction signal_idx storage reporting; do
+                python sea.py --generate-module $mod
+              done
+              ;;
+
+            refactor_main)
+              python sea.py --refactor-main
+              ;;
+
+            health_check)
+              if python main.py --health-check 2>/dev/null; then
+                python main.py --health-check
+              elif [ -f monitoring.py ]; then
+                python monitoring.py
+              else
+                echo "Health-check entry point unavailable."
+                exit 1
+              fi
+              ;;
+
+            god_entity|*)
+              echo "GOD ENTITY MODE (Full Autonomous)"
+              python main.py --dry-run --enable-self-evolving
+              ;;
+
+          esac
+
+
+      # ========================================================================
+      # 11. S.E.A. DIRECT STANDALONE EVOLUTION (sea.py)
+      # ========================================================================
+
+      - name: Run S.E.A. Direct Evolution
+        env:
+
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+
+          IDX_PROXY_URL: ${{ secrets.IDX_PROXY_URL }}
+
+          IDX_SIMULATION_ONLY: "true"
+
+          LIVE_BROKER_ENABLED: "false"
+
+          SEA_AUTONOMOUS: "true"
+
+          SEA_SELF_MODIFY: "true"
+
+          SEA_GIT: "true"
+
+          SEA_DRY_RUN: "false"
+
+          SEA_ALLOW_DELETE: "true"
+
+          SEA_MODULE_GENERATION: "true"
+
+          SEA_WORKFLOW_REFACTOR: "true"
+
+          AGENT_MAX_ITERATIONS: "5"
+
+          GIT_MODE: "disabled"
+
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+
+          echo "=============================================="
+          echo "S.E.A. DIRECT EVOLUTION"
+          echo "=============================================="
+
+          echo "Autonomous: $SEA_AUTONOMOUS"
+          echo "Self Modify: $SEA_SELF_MODIFY"
+          echo "Allow Delete: $SEA_ALLOW_DELETE"
+          echo "Module Gen: $SEA_MODULE_GENERATION"
+          echo "Workflow Refactor: $SEA_WORKFLOW_REFACTOR"
+          echo "Simulation Only: $IDX_SIMULATION_ONLY"
+
+          if [ ! -f sea.py ]; then
+            echo "❌ ERROR: sea.py not found."
+            exit 1
+          fi
+
+          echo
+          echo "📊 Git status before evolution:"
+          git status --short --branch
+
+          echo
+          echo "🧠 Starting S.E.A. evolutionary engine..."
+
+          # Ensure required modules exist in memory
+          for mod in risk features portfolio prediction signal_idx; do
+            if ! python sea.py --generate-module $mod 2>&1 | grep -q "already exists"; then
+              echo "📦 Generating module: $mod"
+              python sea.py --generate-module $mod
+            fi
+          done
+
+          # Run evolution loop
+          python sea.py --run --max-iterations "$AGENT_MAX_ITERATIONS"
+
+          echo
+          echo "✅ S.E.A. evolution completed."
+
+          # Optional: cleanup if allowed
+          if [ "$SEA_ALLOW_DELETE" = "true" ]; then
+            echo "🧹 Running autonomous cleanup..."
+            python sea.py --cleanup || true
+          fi
+
+
+      # ========================================================================
+      # 12. POST-EVOLUTION COMPILATION
+      # ========================================================================
+
+      - name: Post-Evolution Compilation
+        if: always()
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+
+          echo "=============================================="
+          echo "POST-EVOLUTION ANALYSIS"
+          echo "=============================================="
+
+          python -m compileall -q . || {
+            echo "⚠️ WARNING: Compilation errors detected."
+            exit 1
+          }
+
+          echo "✅ Post-evolution compilation PASS."
+
+
+      # ========================================================================
+      # 13. SIMULATION SAFETY STATE
+      # ========================================================================
+
+      - name: Verify Trading Execution State
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+
+          python - <<'PY'
+          import os
+          sim = os.environ.get("IDX_SIMULATION_ONLY", "").lower()
+          broker = os.environ.get("LIVE_BROKER_ENABLED", "").lower()
+          if sim != "true":
+              raise SystemExit("FAIL: IDX_SIMULATION_ONLY != true")
+          if broker != "false":
+              raise SystemExit("FAIL: LIVE_BROKER_ENABLED != false")
+          print("✅ Trading domain state PASS.")
+          PY
+
+
+      # ========================================================================
+      # 14. SQLITE INTEGRITY
+      # ========================================================================
+
+      - name: SQLite Integrity Audit
+        if: always()
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+
+          for db_file in $(find . -type f \( -name "*.db" -o -name "*.sqlite" \)); do
+            echo "Processing: $db_file"
+            sqlite3 "$db_file" "PRAGMA wal_checkpoint(TRUNCATE);" || true
+            CHECK_RESULT="$(sqlite3 "$db_file" "PRAGMA integrity_check;")"
+            if [ "$CHECK_RESULT" != "ok" ]; then
+              echo "❌ ERROR: SQLite integrity failure: $db_file"
+              exit 1
+            fi
+            echo "✅ SQLite PASS: $db_file"
+          done
+
+
+      # ========================================================================
+      # 15. EVOLUTION STATE SUMMARY
+      # ========================================================================
+
+      - name: Evolution State Summary
+        if: always()
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+
+          echo "=============================================="
+          echo "S.E.A. STATE SUMMARY"
+          echo "=============================================="
+
+          echo
+          echo "📊 Git status:"
+          git status --short --branch
+
+          echo
+          echo "📜 Recent commits:"
+          git log --oneline -10 || true
+
+          echo
+          echo "💾 Memory databases:"
+          find . -maxdepth 2 -type f \( -name "*.db" -o -name "*.sqlite" \) -print || true
+
+          echo
+          echo "📁 Generated modules:"
+          find . -maxdepth 2 -type f -name "sea_generated_*.py" -print 2>/dev/null || true
+
+          echo
+          echo "📊 Reports:"
+          find reports -maxdepth 2 -type f -print 2>/dev/null || true
+
+          echo
+          echo "📝 Logs:"
+          find logs -maxdepth 2 -type f -print 2>/dev/null || true
+
+
+      # ========================================================================
+      # 16. COMMIT EVOLUTION STATE (Menggunakan GH_PAT)
+      # ========================================================================
+
+      - name: Persist Evolution State
+        if: success()
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          # 🔥 Gunakan GH_PAT untuk remote URL agar push berhasil
+          git remote set-url origin "https://x-access-token:${{ secrets.GH_PAT }}@github.com/${{ github.repository }}.git"
+
+          git add -A
+
+          if git diff --cached --quiet; then
+            echo "ℹ️ No changes to commit."
+            exit 0
+          fi
+
+          git commit -m "god(entity): autonomous evolution and runtime state [skip ci]"
+
+          git fetch origin main
+
+          MAX_ATTEMPTS=3
+          ATTEMPT=1
+
+          while true; do
+            if git push origin HEAD:main; then
+              echo "✅ Evolution pushed successfully using GH_PAT."
+              break
+            fi
+            if [ "$ATTEMPT" -ge "$MAX_ATTEMPTS" ]; then
+              echo "❌ Push failed after $MAX_ATTEMPTS attempts."
+              exit 1
+            fi
+            echo "🔄 Push rejected. Rebasing..."
+            git fetch origin main
+            if ! git rebase origin/main; then
+              git rebase --abort || true
+              exit 1
+            fi
+            ATTEMPT=$((ATTEMPT + 1))
+            sleep 3
+          done
+
+
+      # ========================================================================
+      # 17. FAILURE TELEMETRY
+      # ========================================================================
+
+      - name: Upload Telemetry on Failure
+        if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: sea-failure-${{ github.run_id }}
+          retention-days: 14
+          if-no-files-found: ignore
+          path: |
+            logs/**/*.log
+            logs/*.log
+            reports/**/*.md
+            reports/*.md
+            reports/**/*.csv
+            prediksi_idx_log.csv
+            portfolio_*.json
+            portfolio_state.json
+            .sea_memory.db
+            sea.py.bak
+            *.db
+            *.sqlite

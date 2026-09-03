@@ -1,0 +1,94 @@
+name: Autonomous Quant Trading Cycle
+
+on:
+  repository_dispatch:
+    types: [run_trading_cycle]
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'Run mode'
+        required: false
+        default: 'paper'
+        type: choice
+        options:
+          - paper
+          - dry-run
+
+jobs:
+  quant-cycle:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    env:
+      TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+      TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+      MODE: ${{ github.event.inputs.mode || 'paper' }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: risk_engine
+
+      - name: Build Risk Engine
+        working-directory: risk_engine
+        run: cargo build --release
+
+      - name: Sync Turso Embedded Replica (pull)
+        run: |
+          # Placeholder: actual turso CLI / libsql sync happens inside Python
+          echo "Turso sync_url will be used by Python layer"
+
+      - name: Run ML Pipeline + Meta-Labeling
+        id: ml
+        run: |
+          python -m src.python.pipeline.run_cycle --mode $MODE
+
+      - name: Risk Guardrails (Rust)
+        id: risk
+        run: |
+          # Pass signal JSON from ML step to Rust risk engine
+          ./risk_engine/target/release/risk_engine \
+            --signal-file /tmp/signal.json \
+            --portfolio-file /tmp/portfolio.json \
+            --output /tmp/risk_decision.json
+
+      - name: Execute / Paper Trade (if risk allows)
+        if: success()
+        run: |
+          python -m src.python.execution.paper_trade \
+            --risk-decision /tmp/risk_decision.json
+
+      - name: Push state to Turso + Telegram report
+        if: always()
+        run: |
+          python -m src.python.reporting.notify \
+            --status ${{ job.status }}
+
+      - name: Upload artifacts (debug only)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: debug-logs
+          path: |
+            /tmp/*.json
+            logs/

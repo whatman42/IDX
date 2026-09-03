@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+.env
+*.egg-info/
+dist/
+build/
+
+# Rust
+risk_engine/target/
+**/*.rs.bk
+
+# Data & models
+data/
+models/
+*.onnx
+*.joblib
+*.pkl
+
+# IDE / OS
+.idea/
+.vscode/
+.DS_Store
+*.swp
+
+# Logs & temp
+logs/
+/tmp/
+*.log

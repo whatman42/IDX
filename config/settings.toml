@@ -1,0 +1,17 @@
+[risk]
+max_daily_drawdown = 0.03
+max_portfolio_drawdown = 0.12
+max_position_weight = 0.20
+min_meta_proba = 0.55
+
+[ml]
+primary_model = "lightgbm"
+meta_model = "random_forest"
+calibration = "platt"
+
+[execution]
+mode = "paper"
+base_currency = "IDR"
+
+[telegram]
+enabled = true

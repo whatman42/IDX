@@ -10,6 +10,7 @@ from typing import Any, Optional
 
 import numpy as np
 import pandas as pd
+import polars as pl
 import typer
 from dotenv import load_dotenv
 
@@ -53,6 +54,18 @@ def _synthetic_market(n: int = 80, seed: int = 42) -> pd.DataFrame:
     })
 
 
+def _pdf_to_pl(df: pd.DataFrame) -> pl.DataFrame:
+    """Convert without pyarrow dependency."""
+    data = {}
+    for c in df.columns:
+        s = df[c]
+        if pd.api.types.is_datetime64_any_dtype(s):
+            data[c] = s.dt.to_pydatetime().tolist()
+        else:
+            data[c] = s.to_numpy().tolist()
+    return pl.DataFrame(data)
+
+
 @app.command()
 def main(mode: str = "paper", data_path: Optional[str] = None) -> None:
     load_dotenv()
@@ -74,8 +87,7 @@ def main(mode: str = "paper", data_path: Optional[str] = None) -> None:
         print(json.dumps(log, indent=2))
         raise SystemExit(0)
 
-    import polars as pl
-    feats_pl = compute_features(pl.from_pandas(raw))
+    feats_pl = compute_features(_pdf_to_pl(raw))
     ds = build_ml_dataset(feats_pl, drop_warmup=True)
     X = ds["X"].to_pandas()
     feature_cols = [c for c in ALL_FEATURE_COLUMNS if c in X.columns]
@@ -133,7 +145,6 @@ def main(mode: str = "paper", data_path: Optional[str] = None) -> None:
     exits = portfolio.check_exits(marks, cycle_id=cycle_id)
     log["exits"] = [e.tx_id for e in exits]
 
-    txn = None
     if cfg.allow_new_trades and bool(sig_row["accepted"]) and mode == "paper":
         Path("/tmp/signal.json").write_text(json.dumps(sig_row, default=str))
         Path("/tmp/portfolio.json").write_text(json.dumps({

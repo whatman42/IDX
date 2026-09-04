@@ -1,0 +1,57 @@
+# IDX Weekend Training
+# Sat 09:00 WIB = 02:00 UTC exploration (no promotion)
+# Sun 09:00 WIB = 02:00 UTC validation + optional promotion
+# HARD LIMIT: workflow timeout 22 min; internal budget ~20 min.
+# Failed training NEVER replaces production.
+
+name: Weekend Training
+
+on:
+  schedule:
+    - cron: "0 2 * * 6"
+    - cron: "0 2 * * 0"
+  workflow_dispatch:
+    inputs:
+      stage:
+        description: "Training stage"
+        required: false
+        default: "auto"
+        type: choice
+        options: [auto, exploration, validation]
+
+concurrency:
+  group: idx-training
+  cancel-in-progress: false
+
+jobs:
+  training:
+    runs-on: ubuntu-latest
+    timeout-minutes: 22
+    env:
+      TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+      TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+      IDX_STATE_AUTHORITY: ${{ secrets.IDX_STATE_AUTHORITY || 'auto' }}
+      IDX_TRAINING_BUDGET_SEC: "1200"
+      IDX_STAGE: ${{ github.event.inputs.stage || 'auto' }}
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      - name: Adaptive training under deadline
+        run: python -m src.python.training.weekend_train --stage "$IDX_STAGE" --budget-sec "${IDX_TRAINING_BUDGET_SEC}"
+      - name: Upload candidates
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: training-artifacts
+          path: |
+            models/candidates/
+            state/training_runs/
+          if-no-files-found: ignore

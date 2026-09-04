@@ -7,7 +7,7 @@ import sqlite3
 from abc import ABC, abstractmethod
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Optional
+from typing import Optional
 
 SCHEMA_SQL = """
 CREATE TABLE IF NOT EXISTS cycles (
@@ -95,17 +95,21 @@ class SQLiteStateRepository(StateRepository):
     def put_cycle(self, cycle_id: str, payload: dict) -> None:
         now = datetime.now(timezone.utc).isoformat()
         with self._conn() as c:
-            c.execute("INSERT OR REPLACE INTO cycles(cycle_id,timestamp,mode,status,git_sha,payload,created_at) VALUES(?,?,?,?,?,?,?)",
-                      (cycle_id, payload.get("timestamp", now), payload.get("mode"), payload.get("status"),
-                       payload.get("git_sha", ""), json.dumps(payload, default=str), now))
+            c.execute(
+                "INSERT OR REPLACE INTO cycles(cycle_id,timestamp,mode,status,git_sha,payload,created_at) VALUES(?,?,?,?,?,?,?)",
+                (cycle_id, payload.get("timestamp", now), payload.get("mode"), payload.get("status"),
+                 payload.get("git_sha", ""), json.dumps(payload, default=str), now),
+            )
 
     def put_signal(self, signal_id: str, cycle_id: str, payload: dict) -> bool:
         now = datetime.now(timezone.utc).isoformat()
         try:
             with self._conn() as c:
-                c.execute("INSERT INTO signals(signal_id,cycle_id,symbol,side,payload,created_at) VALUES(?,?,?,?,?,?)",
-                          (signal_id, cycle_id, payload.get("symbol"), payload.get("side"),
-                           json.dumps(payload, default=str), now))
+                c.execute(
+                    "INSERT INTO signals(signal_id,cycle_id,symbol,side,payload,created_at) VALUES(?,?,?,?,?,?)",
+                    (signal_id, cycle_id, payload.get("symbol"), payload.get("side"),
+                     json.dumps(payload, default=str), now),
+                )
             return True
         except sqlite3.IntegrityError:
             return False
@@ -114,10 +118,12 @@ class SQLiteStateRepository(StateRepository):
         now = datetime.now(timezone.utc).isoformat()
         try:
             with self._conn() as c:
-                c.execute("INSERT INTO transactions(tx_id,order_id,signal_id,symbol,side,action,qty,price,fee,cycle_id,timestamp,created_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)",
-                          (tx["tx_id"], tx["order_id"], tx.get("signal_id"), tx.get("symbol"), tx.get("side"),
-                           tx.get("action"), tx.get("qty"), tx.get("price"), tx.get("fee"), tx.get("cycle_id"),
-                           tx.get("timestamp"), now))
+                c.execute(
+                    "INSERT INTO transactions(tx_id,order_id,signal_id,symbol,side,action,qty,price,fee,cycle_id,timestamp,created_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)",
+                    (tx["tx_id"], tx["order_id"], tx.get("signal_id"), tx.get("symbol"), tx.get("side"),
+                     tx.get("action"), tx.get("qty"), tx.get("price"), tx.get("fee"), tx.get("cycle_id"),
+                     tx.get("timestamp"), now),
+                )
             return True
         except sqlite3.IntegrityError:
             return False
@@ -125,50 +131,82 @@ class SQLiteStateRepository(StateRepository):
     def put_portfolio_snapshot(self, cycle_id: str, cash: float, equity: float, payload: dict) -> None:
         now = datetime.now(timezone.utc).isoformat()
         with self._conn() as c:
-            c.execute("INSERT OR REPLACE INTO portfolio_snapshots(snapshot_id,cycle_id,cash,equity,payload,created_at) VALUES(?,?,?,?,?,?)",
-                      (f"snap_{cycle_id}", cycle_id, cash, equity, json.dumps(payload, default=str), now))
+            c.execute(
+                "INSERT OR REPLACE INTO portfolio_snapshots(snapshot_id,cycle_id,cash,equity,payload,created_at) VALUES(?,?,?,?,?,?)",
+                (f"snap_{cycle_id}", cycle_id, cash, equity, json.dumps(payload, default=str), now),
+            )
 
     def put_governor_decision(self, decision_id: str, cycle_id: str, payload: dict) -> None:
         now = datetime.now(timezone.utc).isoformat()
         with self._conn() as c:
-            c.execute("INSERT OR REPLACE INTO governor_decisions(decision_id,cycle_id,payload,created_at) VALUES(?,?,?,?)",
-                      (decision_id, cycle_id, json.dumps(payload, default=str), now))
+            c.execute(
+                "INSERT OR REPLACE INTO governor_decisions(decision_id,cycle_id,payload,created_at) VALUES(?,?,?,?)",
+                (decision_id, cycle_id, json.dumps(payload, default=str), now),
+            )
 
     def enqueue_notification(self, event_id: str, event_type: str, payload: dict) -> None:
         now = datetime.now(timezone.utc).isoformat()
         with self._conn() as c:
-            c.execute("INSERT OR IGNORE INTO notification_outbox(event_id,event_type,payload,status,attempts,created_at,updated_at) VALUES(?,?,?,'PENDING',0,?,?)",
-                      (event_id, event_type, json.dumps(payload, default=str), now, now))
+            c.execute(
+                "INSERT OR IGNORE INTO notification_outbox(event_id,event_type,payload,status,attempts,created_at,updated_at) VALUES(?,?,?,'PENDING',0,?,?)",
+                (event_id, event_type, json.dumps(payload, default=str), now, now),
+            )
 
     def pending_notifications(self, limit: int = 20) -> list[dict]:
         with self._conn() as c:
-            rows = c.execute("SELECT event_id,event_type,payload,attempts FROM notification_outbox WHERE status IN ('PENDING','FAILED') ORDER BY created_at LIMIT ?", (limit,)).fetchall()
+            rows = c.execute(
+                "SELECT event_id,event_type,payload,attempts FROM notification_outbox WHERE status IN ('PENDING','FAILED') ORDER BY created_at LIMIT ?",
+                (limit,),
+            ).fetchall()
         return [{"event_id": r[0], "event_type": r[1], "payload": json.loads(r[2]), "attempts": r[3]} for r in rows]
+
+    def claim_pending_notifications(self, limit: int = 20, worker_id: str = "w") -> list[dict]:
+        """Atomically claim PENDING/FAILED rows (status -> PROCESSING) to avoid double delivery."""
+        now = datetime.now(timezone.utc).isoformat()
+        claimed = []
+        with self._conn() as c:
+            rows = c.execute(
+                "SELECT event_id,event_type,payload,attempts FROM notification_outbox "
+                "WHERE status IN ('PENDING','FAILED') ORDER BY created_at LIMIT ?",
+                (limit,),
+            ).fetchall()
+            for r in rows:
+                cur = c.execute(
+                    "UPDATE notification_outbox SET status='PROCESSING', updated_at=? "
+                    "WHERE event_id=? AND status IN ('PENDING','FAILED')",
+                    (now, r[0]),
+                )
+                if cur.rowcount == 1:
+                    claimed.append(
+                        {"event_id": r[0], "event_type": r[1], "payload": json.loads(r[2]), "attempts": r[3]}
+                    )
+        return claimed
 
     def mark_notification(self, event_id: str, status: str, error: str = "") -> None:
         now = datetime.now(timezone.utc).isoformat()
         with self._conn() as c:
-            c.execute("UPDATE notification_outbox SET status=?, last_error=?, attempts=attempts+1, updated_at=? WHERE event_id=?",
-                      (status, error, now, event_id))
+            c.execute(
+                "UPDATE notification_outbox SET status=?, last_error=?, attempts=attempts+1, updated_at=? WHERE event_id=?",
+                (status, error, now, event_id),
+            )
 
     def put_audit(self, event_id: str, cycle_id: str, event_type: str, severity: str, payload: dict) -> None:
         now = datetime.now(timezone.utc).isoformat()
         with self._conn() as c:
-            c.execute("INSERT OR REPLACE INTO audit_events(event_id,cycle_id,event_type,severity,payload,created_at) VALUES(?,?,?,?,?,?)",
-                      (event_id, cycle_id, event_type, severity, json.dumps(payload, default=str), now))
+            c.execute(
+                "INSERT OR REPLACE INTO audit_events(event_id,cycle_id,event_type,severity,payload,created_at) VALUES(?,?,?,?,?,?)",
+                (event_id, cycle_id, event_type, severity, json.dumps(payload, default=str), now),
+            )
 
     def put_risk_event(self, event_id: str, cycle_id: str, allow: bool, reason: str, payload: dict) -> None:
         now = datetime.now(timezone.utc).isoformat()
         with self._conn() as c:
-            c.execute("INSERT OR REPLACE INTO risk_events(event_id,cycle_id,allow,reason,payload,created_at) VALUES(?,?,?,?,?,?)",
-                      (event_id, cycle_id, int(allow), reason, json.dumps(payload, default=str), now))
+            c.execute(
+                "INSERT OR REPLACE INTO risk_events(event_id,cycle_id,allow,reason,payload,created_at) VALUES(?,?,?,?,?,?)",
+                (event_id, cycle_id, int(allow), reason, json.dumps(payload, default=str), now),
+            )
 
     def get_latest_portfolio(self) -> Optional[dict]:
         with self._conn() as c:
             row = c.execute("SELECT payload FROM portfolio_snapshots ORDER BY created_at DESC LIMIT 1").fetchone()
         return json.loads(row[0]) if row else None
-
-
-def open_repository(config: Optional[dict] = None) -> StateRepository:
-    config = config or {}
-    return SQLiteStateRepository(config.get("sqlite_path") or "state/idx.db")

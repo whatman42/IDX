@@ -227,11 +227,32 @@ def run_historical_oos(
 def main() -> None:
     import argparse
     p = argparse.ArgumentParser(description="IDX Historical OOS Validation")
-    p.add_argument("path")
+    p.add_argument("path", nargs="?", default="")
     p.add_argument("--dataset-type", default="FIXTURE")
     p.add_argument("--promote", action="store_true")
+    p.add_argument("--real-idx", action="store_true",
+                   help="Resolve REAL_IDX_DATA_PATH; fail-closed if missing (never synthetic)")
     args = p.parse_args()
-    r = run_historical_oos(args.path, dataset_type=DatasetType(args.dataset_type), promote=args.promote)
+    path = args.path
+    dtype = DatasetType(args.dataset_type)
+    if args.real_idx:
+        from src.python.data.real_idx import resolve_real_idx_path, assert_not_fixture_as_real
+        st = resolve_real_idx_path(path or None)
+        if st.status != "PASS" or not st.path:
+            print("REAL IDX DATA = BLOCKED")
+            print(f"reason: {st.reason}")
+            for n in st.notes:
+                print(f"note: {n}")
+            print("MARKET PERFORMANCE = UNVERIFIED")
+            print("PRODUCTION POINTER = UNCHANGED")
+            print("PROMOTION = REJECTED")
+            return
+        path = st.path
+        dtype = DatasetType.REAL_MARKET_DATA
+        assert_not_fixture_as_real(dtype, path)
+    if not path:
+        p.error("path required unless --real-idx with REAL_IDX_DATA_PATH set")
+    r = run_historical_oos(path, dataset_type=dtype, promote=args.promote)
     print(r.summary_text())
 
 if __name__ == "__main__":

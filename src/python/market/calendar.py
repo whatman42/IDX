@@ -1,28 +1,73 @@
-"""IDX trading session / calendar helpers."""
+"""IDX trading session / calendar — trading day vs non-trading day.
 
+Hardcoded holiday list is a *fallback seed*, not sole source of truth.
+Callers can inject extra non-trading dates or a provider function.
+"""
 from __future__ import annotations
-
 from datetime import date, datetime, time
+from typing import Callable, Optional, Set
 from zoneinfo import ZoneInfo
 
 IDX_TZ = ZoneInfo("Asia/Jakarta")
 SESSION_OPEN = time(9, 0)
 SESSION_CLOSE = time(15, 50)
 
+_SEED_HOLIDAYS: Set[date] = {
+    date(2026, 1, 1), date(2026, 3, 19), date(2026, 3, 20), date(2026, 5, 1),
+    date(2026, 5, 14), date(2026, 5, 15), date(2026, 6, 1), date(2026, 8, 17),
+    date(2026, 12, 25), date(2026, 12, 31),
+}
+
+class TradingCalendar:
+    def __init__(self, extra_holidays: Optional[Set[date]] = None,
+                 provider: Optional[Callable[[date], bool]] = None):
+        self._holidays = set(_SEED_HOLIDAYS)
+        if extra_holidays:
+            self._holidays |= set(extra_holidays)
+        self._provider = provider
+
+    def add_holidays(self, days: Set[date]) -> None:
+        self._holidays |= set(days)
+
+    def is_weekday(self, d: date) -> bool:
+        return d.weekday() < 5
+
+    def is_trading_day(self, d: date) -> bool:
+        if self._provider is not None:
+            try:
+                return bool(self._provider(d))
+            except Exception:
+                pass
+        if not self.is_weekday(d):
+            return False
+        if d in self._holidays:
+            return False
+        return True
+
+    def in_session(self, ts: datetime) -> bool:
+        if ts.tzinfo is None:
+            ts = ts.replace(tzinfo=IDX_TZ)
+        local = ts.astimezone(IDX_TZ)
+        if not self.is_trading_day(local.date()):
+            return False
+        t = local.time()
+        return SESSION_OPEN <= t <= SESSION_CLOSE
+
+    def after_close(self, ts: datetime) -> bool:
+        if ts.tzinfo is None:
+            ts = ts.replace(tzinfo=IDX_TZ)
+        return ts.astimezone(IDX_TZ).time() >= SESSION_CLOSE
+
+_DEFAULT = TradingCalendar()
 
 def is_weekday(d: date) -> bool:
-    return d.weekday() < 5
+    return _DEFAULT.is_weekday(d)
 
+def is_trading_day(d: date, calendar: Optional[TradingCalendar] = None) -> bool:
+    return (calendar or _DEFAULT).is_trading_day(d)
 
-def in_session(ts: datetime) -> bool:
-    if ts.tzinfo is None:
-        ts = ts.replace(tzinfo=IDX_TZ)
-    local = ts.astimezone(IDX_TZ)
-    if not is_weekday(local.date()):
-        return False
-    t = local.time()
-    return SESSION_OPEN <= t <= SESSION_CLOSE
-
+def in_session(ts: datetime, calendar: Optional[TradingCalendar] = None) -> bool:
+    return (calendar or _DEFAULT).in_session(ts)
 
 def is_stale(last_bar_ts: datetime, now: datetime | None = None, max_age_days: float = 5.0) -> bool:
     now = now or datetime.now(IDX_TZ)

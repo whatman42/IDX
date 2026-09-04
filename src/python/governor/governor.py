@@ -1,4 +1,4 @@
-"""ML Governor — multi-objective utility + backward-compatible decide API."""
+"""ML Governor — multi-objective utility + backward-compatible decide API + learning hooks."""
 from __future__ import annotations
 import json
 from dataclasses import asdict, dataclass, field
@@ -234,3 +234,71 @@ class MLGovernor:
         fields = set(GovernorConfig.__dataclass_fields__)
         self.config = GovernorConfig(**{k: v for k, v in d.items() if k in fields})
         return self.config
+
+
+def apply_policy_action(cfg: GovernorConfig, action: str) -> GovernorConfig:
+    if action == "MODEL_PRIMARY":
+        cfg.active_models = ["primary_lgbm"]
+        cfg.model_weights = {"primary_lgbm": 1.0}
+        cfg.strategy = "primary_only"
+    elif action == "MODEL_PRIMARY_META":
+        cfg.active_models = ["primary_lgbm", "meta_rf"]
+        cfg.model_weights = {"primary_lgbm": 1.0, "meta_rf": 1.0}
+        cfg.strategy = "primary_meta"
+    elif action == "LIGHTWEIGHT_ENSEMBLE":
+        cfg.active_models = ["primary_lgbm"]
+        cfg.meta_threshold = max(cfg.meta_threshold, 0.58)
+        cfg.compute_budget = min(cfg.compute_budget, 0.5)
+        cfg.strategy = "lightweight"
+    elif action == "FULL_ENSEMBLE":
+        cfg.active_models = ["primary_lgbm", "meta_rf"]
+        cfg.compute_budget = 1.0
+        cfg.strategy = "full_ensemble"
+    elif action == "DEFENSIVE":
+        cfg.meta_threshold = max(cfg.meta_threshold, 0.65)
+        cfg.risk_budget = min(cfg.risk_budget, 0.08)
+        cfg.max_position_pct = min(cfg.max_position_pct, 0.08)
+        cfg.strategy = "defensive"
+    return cfg
+
+
+def decide_with_memory(
+    governor: MLGovernor,
+    memory: Any,
+    *,
+    regime: Any = "neutral",
+    data_ok: bool = True,
+    recent_drawdown: float = 0.0,
+    volatility: float = 0.0,
+    decision_id: str = "",
+    timestamp: str = "",
+    **kwargs,
+) -> GovernorConfig:
+    from src.python.governor.learning import DecisionRecord
+    cfg = governor.decide(
+        regime=regime, data_ok=data_ok, recent_drawdown=recent_drawdown,
+        decision_id=decision_id, timestamp=timestamp, **kwargs,
+    )
+    if not data_ok:
+        return cfg
+    ctx = f"{cfg.regime}|dd={round(recent_drawdown, 2)}"
+    action = memory.select_action(ctx)
+    cfg = apply_policy_action(cfg, action)
+    rec = DecisionRecord(
+        decision_id=cfg.decision_id or decision_id or "anon",
+        timestamp=timestamp or cfg.timestamp,
+        market_regime=cfg.regime,
+        volatility=volatility,
+        drawdown=recent_drawdown,
+        available_compute=cfg.compute_budget,
+        selected_models=list(cfg.active_models),
+        ensemble_weights=dict(cfg.model_weights),
+        confidence_threshold=cfg.meta_threshold,
+        risk_multiplier=cfg.risk_budget,
+        expected_utility=cfg.utility_score,
+        policy_action=action,
+        context_key=ctx,
+    )
+    memory.record_decision(rec)
+    cfg.reason = (cfg.reason or "") + f"+policy:{action}"
+    return cfg

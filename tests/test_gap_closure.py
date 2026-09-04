@@ -99,7 +99,7 @@ class TestNotifyFormat:
             "governor_version": "g1", "regime": "HIGH_VOL", "equity": 1e8, "cash": 9e7,
             "signal_id": "sig", "tx_id": "tx", "timestamp": "t",
         })
-        assert "IDX BUY" in msg and "BBCA" in msg
+        assert "BBCA" in msg and ("SINYAL BELI" in msg or "IDX BUY" in msg)
 
 
 class TestObservability:

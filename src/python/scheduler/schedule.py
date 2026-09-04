@@ -11,6 +11,7 @@ from datetime import date, datetime, time
 from enum import Enum
 from typing import Optional, Protocol
 from zoneinfo import ZoneInfo
+from src.python.market.calendar import is_trading_day as cal_is_trading_day
 
 IDX_TZ = ZoneInfo("Asia/Jakarta")
 SESSION_CLOSE = time(15, 50)
@@ -68,7 +69,7 @@ def classify_schedule(clock: Clock, *, manual: bool = False, manual_mode: str = 
     now = clock.now()
     local = now.astimezone(IDX_TZ) if now.tzinfo else now.replace(tzinfo=IDX_TZ)
     d = local.date()
-    trading = is_trading_day if is_trading_day is not None else is_weekday(d)
+    trading = is_trading_day if is_trading_day is not None else cal_is_trading_day(d)
     if manual:
         if manual_mode == "training":
             stage = "exploration" if d.weekday() == 5 else "validation"

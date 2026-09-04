@@ -123,15 +123,19 @@ class MetaLabelGovernor:
         self.meta.training_rows = len(X_fit)
         self.meta.validation_rows = len(X_cal)
 
-        if self.calibration == "none":
+        if len(set(y_cal.tolist())) < 2 or self.calibration == "none":
             self.calibrated = self.base
         elif self.calibration == "platt":
-            raw = self.base.predict_proba(X_cal)[:, 1].reshape(-1, 1)
+            proba = self.base.predict_proba(X_cal)
+            col = 1 if proba.shape[1] > 1 else 0
+            raw = proba[:, col].reshape(-1, 1)
             platt = LogisticRegression(max_iter=1000, random_state=42)
             platt.fit(raw, y_cal)
             self.calibrated = ("platt", self.base, platt)
         elif self.calibration == "isotonic":
-            raw = self.base.predict_proba(X_cal)[:, 1]
+            proba = self.base.predict_proba(X_cal)
+            col = 1 if proba.shape[1] > 1 else 0
+            raw = proba[:, col]
             self.iso = IsotonicRegression(out_of_bounds="clip")
             self.iso.fit(raw, y_cal)
             self.calibrated = ("isotonic", self.base, self.iso)
@@ -147,10 +151,15 @@ class MetaLabelGovernor:
         if not self._fitted or self.calibrated is None:
             raise RuntimeError("Governor not fitted")
         X = self._select_features(X)
+
+        def _pos_proba(model, X_):
+            proba = model.predict_proba(X_)
+            return proba[:, 1] if proba.shape[1] > 1 else proba[:, 0]
+
         if isinstance(self.calibrated, RandomForestClassifier):
-            return self.calibrated.predict_proba(X)[:, 1]
+            return _pos_proba(self.calibrated, X)
         kind, base, calibrator = self.calibrated
-        raw = base.predict_proba(X)[:, 1]
+        raw = _pos_proba(base, X)
         if kind == "platt":
             return calibrator.predict_proba(raw.reshape(-1, 1))[:, 1]
         return calibrator.predict(raw)

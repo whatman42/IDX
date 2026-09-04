@@ -107,6 +107,7 @@ def run_historical_oos(
     symbols: Optional[list] = None, price_basis: PriceBasis = PriceBasis.RAW,
     adjustment_status: str = "UNKNOWN", promote: bool = False,
     cost_model: Optional[CostModel] = None, do_walk_forward: bool = True, seed: int = 7,
+    max_gap_days: float = 10.0,
 ) -> HistoricalOOSReport:
     t0 = time.monotonic()
     report = HistoricalOOSReport(production_unchanged=True)
@@ -123,7 +124,7 @@ def run_historical_oos(
         report.corporate_action = "PASS" if prov.corporate_action_available else "BLOCKED"
         report.real_idx_data = "PASS" if prov.dataset_type == DatasetType.REAL_MARKET_DATA else "BLOCKED"
         report.market_performance = "UNVERIFIED"
-        q = validate_ohlcv(contract.df)
+        q = validate_ohlcv(contract.df, max_gap_days=max_gap_days)
         report.data_quality = "PASS" if q.ok else "FAIL"
         if not q.ok:
             report.issues.extend(q.issues)
@@ -181,6 +182,7 @@ def run_historical_oos(
             windows = []
             try:
                 for ti, oi in walk_forward_splits(ts, n_splits=3, embargo=pd.Timedelta(days=2)):
+                    Xp, yp = Xf.iloc[ti], y.iloc[oi] if False else y.iloc[oi]
                     Xp, yp = Xf.iloc[ti], y.iloc[ti]
                     Xo, yo = Xf.iloc[oi], y.iloc[oi]
                     if len(Xp) < 20 or len(Xo) < 5:
@@ -197,8 +199,16 @@ def run_historical_oos(
         else:
             report.walk_forward = "BLOCKED"
         metrics = dict(cls)
-        metrics["expectancy"] = float(tr.get("avg_return", 0.0))
-        metrics["max_drawdown"] = abs(float(tr.get("max_drawdown", 0.0)))
+        exp = tr.get("avg_return", 0.0)
+        try:
+            metrics["expectancy"] = float(exp) if exp == exp and abs(float(exp)) != float("inf") else 0.0
+        except Exception:
+            metrics["expectancy"] = 0.0
+        mdd = tr.get("max_drawdown", 0.0)
+        try:
+            metrics["max_drawdown"] = abs(float(mdd)) if mdd == mdd else 0.0
+        except Exception:
+            metrics["max_drawdown"] = 0.0
         metrics["n_samples"] = float(cls.get("n_samples", 0))
         prom = evaluate_promotion(metrics, min_samples=20, min_accuracy=0.52)
         if prov.dataset_type != DatasetType.REAL_MARKET_DATA or not promote:
@@ -232,6 +242,7 @@ def main() -> None:
     p.add_argument("--promote", action="store_true")
     p.add_argument("--real-idx", action="store_true",
                    help="Resolve REAL_IDX_DATA_PATH; fail-closed if missing (never synthetic)")
+    p.add_argument("--max-gap-days", type=float, default=10.0)
     args = p.parse_args()
     path = args.path
     dtype = DatasetType(args.dataset_type)
@@ -252,7 +263,7 @@ def main() -> None:
         assert_not_fixture_as_real(dtype, path)
     if not path:
         p.error("path required unless --real-idx with REAL_IDX_DATA_PATH set")
-    r = run_historical_oos(path, dataset_type=dtype, promote=args.promote)
+    r = run_historical_oos(path, dataset_type=dtype, promote=args.promote, max_gap_days=args.max_gap_days)
     print(r.summary_text())
 
 if __name__ == "__main__":

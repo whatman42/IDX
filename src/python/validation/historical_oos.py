@@ -2,6 +2,7 @@
 
 Never claims market edge. REAL only when provenance.dataset_type is REAL_MARKET_DATA
 and licensed source is documented by caller.
+Economic metrics use trade simulation (T+1 open), not feature pct_change.
 """
 from __future__ import annotations
 import json, time
@@ -17,7 +18,7 @@ from src.python.data.quality import validate_ohlcv
 from src.python.features.engineering import build_ml_dataset, compute_features
 from src.python.features.schema import ALL_FEATURE_COLUMNS
 from src.python.market.providers import CSVProvider, MarketDataContract, ParquetProvider, PriceBasis
-from src.python.ml.evaluation import classification_metrics, trading_metrics
+from src.python.ml.evaluation import classification_metrics
 from src.python.ml.primary_side import PrimarySideModel
 from src.python.ml.temporal import make_purged_split, walk_forward_splits
 from src.python.registry.promotion import evaluate_promotion
@@ -76,10 +77,14 @@ class HistoricalOOSReport:
         if self.classification:
             lines.append(f"accuracy         : {self.classification.get('accuracy', 'N/A')}")
         if self.trading:
-            lines.append(f"expectancy-like  : {self.trading.get('avg_return', 'N/A')}")
+            exp = self.trading.get('expectancy', self.trading.get('avg_return', 'N/A'))
+            lines.append(f"expectancy       : {exp}")
             lines.append(f"max_drawdown     : {self.trading.get('max_drawdown', 'N/A')}")
+            lines.append(f"net_pnl          : {self.trading.get('net_pnl', 'N/A')}")
+            lines.append(f"total_trades     : {self.trading.get('total_trades', 'N/A')}")
         if self.costs:
-            lines.append(f"gross/net        : {self.costs.get('gross_sum')}/{self.costs.get('net_sum')}")
+            lines.append(f"gross/net        : {self.costs.get('gross_pnl')}/{self.costs.get('net_pnl')}")
+            lines.append(f"cost_status      : {self.costs.get('cost_model_status', 'UNVERIFIED')}")
         for i in self.issues:
             lines.append(f"issue: {i}")
         return "\n".join(lines)
@@ -168,21 +173,49 @@ def run_historical_oos(
         cls["n_samples"] = float(len(yte))
         report.classification = cls
         report.model_version = primary.model_version
-        raw = Xf.iloc[:, 0].pct_change().fillna(0.0).to_numpy()
-        rets = raw[split.test_idx]
-        accepted = pred.astype(bool)
+        from src.python.validation.economic_sim import simulate_long_only
+        n_xf = len(Xf)
+        bar_tail = contract.df.iloc[-n_xf:].copy().reset_index(drop=True)
+        if "timestamp" not in bar_tail.columns and "date" in bar_tail.columns:
+            bar_tail = bar_tail.rename(columns={"date": "timestamp"})
+        if "symbol" not in bar_tail.columns and "ticker" in bar_tail.columns:
+            bar_tail = bar_tail.rename(columns={"ticker": "symbol"})
+        te_idx = list(split.test_idx)
         sides = primary.predict_side(Xte)
-        tr = trading_metrics(rets, accepted, sides)
-        report.trading = tr
-        report.costs = cost_model.apply(rets, accepted)
-        base_acc = np.ones(len(rets), dtype=bool)
-        report.baseline = {"name": "always_long_proxy", **trading_metrics(rets, base_acc),
-                           **{f"cost_{k}": v for k, v in cost_model.apply(rets, base_acc).items()}}
+        sig_rows = []
+        for j, i in enumerate(te_idx):
+            if i >= len(bar_tail):
+                continue
+            row = bar_tail.iloc[int(i)]
+            side = int(sides[j]) if pred[j] == 1 else 0
+            if side < 0:
+                side = 0
+            sig_rows.append({"timestamp": row["timestamp"], "symbol": str(row["symbol"]), "side": 1 if side > 0 else 0})
+        sig_df = pd.DataFrame(sig_rows)
+        bars_df = bar_tail[["timestamp", "symbol", "open", "high", "low", "close", "volume"]].copy()
+        sim = simulate_long_only(bars_df, sig_df, cost=cost_model, hold_bars=5)
+        report.trading = sim["metrics"]
+        report.costs = {
+            "gross_pnl": sim["metrics"].get("gross_pnl"),
+            "net_pnl": sim["metrics"].get("net_pnl"),
+            "fees": sim["metrics"].get("total_fees"),
+            "slippage_cost": sim["metrics"].get("total_slippage_cost"),
+            "cost_model_status": sim["metrics"].get("cost_model_status", "UNVERIFIED"),
+            "n_trades": sim["metrics"].get("total_trades"),
+            "timing": sim["metrics"].get("timing"),
+        }
+        report.baseline = {"name": "buy_hold_not_run", "note": "economic_sim_primary_only"}
+        exp = sim["metrics"].get("expectancy", 0.0)
+        mdd = sim["metrics"].get("max_drawdown", 0.0)
+        tr = {
+            "avg_return": exp if isinstance(exp, (int, float)) else 0.0,
+            "max_drawdown": mdd if isinstance(mdd, (int, float)) else 0.0,
+            "n_trades": float(sim["metrics"].get("total_trades") or 0),
+        }
         if do_walk_forward and len(Xf) >= 80:
             windows = []
             try:
                 for ti, oi in walk_forward_splits(ts, n_splits=3, embargo=pd.Timedelta(days=2)):
-                    Xp, yp = Xf.iloc[ti], y.iloc[oi] if False else y.iloc[oi]
                     Xp, yp = Xf.iloc[ti], y.iloc[ti]
                     Xo, yo = Xf.iloc[oi], y.iloc[oi]
                     if len(Xp) < 20 or len(Xo) < 5:
@@ -199,16 +232,8 @@ def run_historical_oos(
         else:
             report.walk_forward = "BLOCKED"
         metrics = dict(cls)
-        exp = tr.get("avg_return", 0.0)
-        try:
-            metrics["expectancy"] = float(exp) if exp == exp and abs(float(exp)) != float("inf") else 0.0
-        except Exception:
-            metrics["expectancy"] = 0.0
-        mdd = tr.get("max_drawdown", 0.0)
-        try:
-            metrics["max_drawdown"] = abs(float(mdd)) if mdd == mdd else 0.0
-        except Exception:
-            metrics["max_drawdown"] = 0.0
+        metrics["expectancy"] = float(tr["avg_return"]) if tr["avg_return"] == tr["avg_return"] else 0.0
+        metrics["max_drawdown"] = abs(float(tr["max_drawdown"])) if tr["max_drawdown"] == tr["max_drawdown"] else 0.0
         metrics["n_samples"] = float(cls.get("n_samples", 0))
         prom = evaluate_promotion(metrics, min_samples=20, min_accuracy=0.52)
         if prov.dataset_type != DatasetType.REAL_MARKET_DATA or not promote:

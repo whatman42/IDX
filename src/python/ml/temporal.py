@@ -10,15 +10,11 @@ We therefore:
 3. Purge training samples whose event window overlaps the next split.
 4. Apply an embargo gap (in bars or timedelta) after each training block.
 """
-
 from __future__ import annotations
-
 from dataclasses import dataclass
 from typing import Iterator, Optional, Tuple, Union
-
 import numpy as np
 import pandas as pd
-
 
 @dataclass(frozen=True)
 class TemporalSplit:
@@ -29,23 +25,19 @@ class TemporalSplit:
     val_end: pd.Timestamp
     test_end: pd.Timestamp
 
-
 def chronological_split(
     timestamps: Union[pd.Series, pd.DatetimeIndex, np.ndarray],
     train_frac: float = 0.6,
     val_frac: float = 0.2,
     test_frac: float = 0.2,
 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
-    """Simple chronological 3-way split. No shuffle."""
     if abs(train_frac + val_frac + test_frac - 1.0) > 1e-6:
         raise ValueError("train_frac + val_frac + test_frac must equal 1.0")
-
     ts = pd.Series(pd.to_datetime(timestamps)).reset_index(drop=True)
     order = ts.argsort(kind="mergesort").to_numpy()
     n = len(order)
     if n < 10:
         raise ValueError(f"Need at least 10 samples for temporal split, got {n}")
-
     n_train = int(n * train_frac)
     n_val = int(n * val_frac)
     train_idx = order[:n_train]
@@ -53,22 +45,18 @@ def chronological_split(
     test_idx = order[n_train + n_val :]
     return train_idx, val_idx, test_idx
 
-
 def purge_overlapping(
     train_idx: np.ndarray,
     holdout_idx: np.ndarray,
     event_times: pd.Series,
     vertical_barrier_times: pd.Series,
 ) -> np.ndarray:
-    """Remove training samples whose vertical barrier overlaps any holdout event."""
     if len(train_idx) == 0 or len(holdout_idx) == 0:
         return train_idx
-
     holdout_start = event_times.iloc[holdout_idx].min()
     vb = vertical_barrier_times.iloc[train_idx]
     keep_mask = vb < holdout_start
     return train_idx[keep_mask.to_numpy()]
-
 
 def apply_embargo(
     train_idx: np.ndarray,
@@ -76,23 +64,19 @@ def apply_embargo(
     event_times: pd.Series,
     embargo: Union[pd.Timedelta, int] = pd.Timedelta(days=5),
 ) -> np.ndarray:
-    """Drop training samples within embargo before the holdout window."""
     if len(train_idx) == 0 or len(holdout_idx) == 0:
         return train_idx
-
     holdout_start = event_times.iloc[holdout_idx].min()
-
-    if isinstance(embargo, (int, np.integer)):
-        ordered = np.sort(train_idx)
-        before = ordered[event_times.iloc[ordered] < holdout_start]
-        if len(before) <= embargo:
-            return np.array([], dtype=int)
-        return before[:-int(embargo)]
-
+    if isinstance(embargo, int):
+        # bar-count embargo: drop last `embargo` training samples by time order
+        order = np.argsort(event_times.iloc[train_idx].to_numpy())
+        if len(order) <= embargo:
+            return train_idx[:0]
+        keep = order[:-embargo]
+        return train_idx[keep]
     cutoff = holdout_start - embargo
-    mask = event_times.iloc[train_idx] < cutoff
+    mask = event_times.iloc[train_idx] <= cutoff
     return train_idx[mask.to_numpy()]
-
 
 def make_purged_split(
     event_times: pd.Series,
@@ -102,16 +86,13 @@ def make_purged_split(
     test_frac: float = 0.2,
     embargo: Union[pd.Timedelta, int] = pd.Timedelta(days=5),
 ) -> TemporalSplit:
-    """Full train/val/test split with purge + embargo."""
     train_idx, val_idx, test_idx = chronological_split(
         event_times, train_frac, val_frac, test_frac
     )
-
     if vertical_barrier_times is not None:
         train_idx = purge_overlapping(train_idx, val_idx, event_times, vertical_barrier_times)
         train_idx = purge_overlapping(train_idx, test_idx, event_times, vertical_barrier_times)
         val_idx = purge_overlapping(val_idx, test_idx, event_times, vertical_barrier_times)
-
     train_idx = apply_embargo(train_idx, val_idx, event_times, embargo)
     val_idx = apply_embargo(val_idx, test_idx, event_times, embargo)
 
@@ -129,7 +110,6 @@ def make_purged_split(
         test_end=_end(test_idx),
     )
 
-
 def walk_forward_splits(
     event_times: pd.Series,
     n_splits: int = 3,
@@ -137,7 +117,12 @@ def walk_forward_splits(
     embargo: Union[pd.Timedelta, int] = pd.Timedelta(days=3),
     vertical_barrier_times: Optional[pd.Series] = None,
 ) -> Iterator[Tuple[np.ndarray, np.ndarray]]:
-    """Expanding-window walk-forward splits."""
+    """Expanding-window walk-forward with **non-overlapping** test blocks.
+
+    Guarantees:
+      - max(train times) < min(test times) after embargo
+      - test windows are pairwise disjoint (no shared indices)
+    """
     ts = pd.Series(pd.to_datetime(event_times)).reset_index(drop=True)
     order = ts.argsort(kind="mergesort").to_numpy()
     n = len(order)
@@ -147,11 +132,27 @@ def walk_forward_splits(
     if fold < 5:
         raise ValueError("Not enough samples for requested walk-forward folds")
 
-    for i in range(1, n_splits + 1):
-        train_end = fold * (i + 1) if i < n_splits else n - fold
-        train_end = max(train_end, int(n * train_min_frac))
-        train_idx = order[:train_end]
-        test_idx = order[train_end : train_end + fold] if i < n_splits else order[train_end:]
+    test_origin = n - n_splits * fold
+    if test_origin < int(n * train_min_frac):
+        fold = max(5, (n - int(n * train_min_frac)) // n_splits)
+        test_origin = n - n_splits * fold
+    if fold < 5 or test_origin < 5:
+        raise ValueError("Not enough samples for non-overlapping walk-forward folds")
+
+    seen_test: set[int] = set()
+    for k in range(n_splits):
+        t0 = test_origin + k * fold
+        t1 = test_origin + (k + 1) * fold
+        test_idx = order[t0:t1]
+        if len(test_idx) == 0:
+            continue
+        train_idx = order[:t0]
+        train_idx = np.asarray(train_idx, dtype=int)
+        test_idx = np.asarray(test_idx, dtype=int)
+        overlap = seen_test.intersection(int(i) for i in test_idx)
+        if overlap:
+            raise RuntimeError(f"walk_forward test overlap detected: {len(overlap)} indices")
+        seen_test.update(int(i) for i in test_idx)
         if vertical_barrier_times is not None:
             train_idx = purge_overlapping(train_idx, test_idx, event_times, vertical_barrier_times)
         train_idx = apply_embargo(train_idx, test_idx, event_times, embargo)

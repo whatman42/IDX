@@ -1,0 +1,61 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  python-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      - name: Pytest
+        run: python -m pytest tests/ -q
+
+  rust-risk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@1.75.0
+      - name: Cargo test
+        working-directory: risk_engine
+        run: cargo test
+      - name: Cargo release
+        working-directory: risk_engine
+        run: cargo build --release
+      - name: Binary smoke
+        run: |
+          printf '%s' '{"timestamp":"t","ticker":"BBCA","side":1,"raw_proba":0.6,"meta_proba":0.7,"suggested_weight":0.1,"mode":"paper"}' > /tmp/sig.json
+          printf '%s' '{"equity":1e8,"cash":1e8,"positions":{},"daily_pnl_pct":0,"max_drawdown_pct":0.01}' > /tmp/pf.json
+          ./risk_engine/target/release/risk_engine --signal-file /tmp/sig.json --portfolio-file /tmp/pf.json --output /tmp/out.json
+          grep -q '"allow"' /tmp/out.json
+
+  integration:
+    runs-on: ubuntu-latest
+    needs: [python-tests, rust-risk]
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - uses: dtolnay/rust-toolchain@1.75.0
+      - run: pip install -r requirements.txt
+      - run: cargo build --release
+        working-directory: risk_engine
+      - name: Dev cycle (synthetic allowed)
+        run: python -m src.python.pipeline.run_cycle --mode development
+        env:
+          IDX_STATE_DIR: /tmp/idx_state_ci

@@ -1,24 +1,35 @@
 # IDX Autonomous Quantitative Signal + Paper Portfolio Platform
 
-Serverless quant system for Indonesia Stock Exchange (BEI/IDX). **Signal + paper portfolio only**.
+Serverless quant system for Indonesia Stock Exchange (BEI/IDX).
+**Signal + paper portfolio only** — no live broker execution.
+
+## Status labels
+
+| Label | Meaning |
+|-------|---------|
+| ENGINEERING_READY | Architecture, tests, CI paths verified in-repo |
+| PAPER_READY | Paper cycle works with CSV/Parquet + approved models |
+| PRODUCTION_DATA_REQUIRED | Licensed IDX feed / CA feed not bundled |
+| CREDENTIALS_REQUIRED | Turso / Telegram secrets not in repo (by design) |
 
 ## Modes
 
 | Mode | Data | Models | Synthetic |
 |------|------|--------|-----------|
-| development/test | synthetic or file | production if present else cold-start | yes |
-| paper/production | **requires** CSV/Parquet/IDX | **approved artifacts only** | **forbidden** |
-| research | any | train candidates | yes |
+| development/test | synthetic or file | production if present else cold-start | allowed |
+| paper/production | **CSV/Parquet/IDX required** | **approved artifacts only** | **forbidden** |
+| research | any | train candidates | allowed |
 
 ## Daily production
 
 ```
-DATA → DQ → FEATURES → LOAD APPROVED MODELS (checksum+schema)
-→ INFERENCE → REGIME → GOVERNOR → SIGNAL → RUST RISK (fail-closed)
-→ PAPER LEDGER → SQLITE STATE → OUTBOX → TELEGRAM
+resolve_provider → DQ → features → load approved models (SHA256+schema)
+→ regime → ML Governor → signal → Rust risk (fail-closed)
+→ paper ledger → StateRepository (SQLite or Turso) → outbox → Telegram
 ```
 
 ```bash
+cd risk_engine && cargo test && cargo build --release
 python -m src.python.pipeline.run_cycle --mode paper --csv-path data/bbca.csv
 ```
 
@@ -28,25 +39,33 @@ python -m src.python.pipeline.run_cycle --mode paper --csv-path data/bbca.csv
 python -m src.python.training.train_candidate --out-dir models/candidates --promote
 ```
 
-## Modules
+Promotion gates: sample size, OOS accuracy, drawdown, expectancy; rejects accuracy-only perfect scores.
 
-market, features, labeling, ml, governor, registry (SHA256 manifests), risk_bridge,
-portfolio (+reconcile), persistence (SQLite Turso-compatible), notify (outbox),
-observability, health, training
+## Persistence authority
 
-## Testing
+- `IDX_STATE_AUTHORITY=auto`: Turso if credentials present, else SQLite
+- `turso`: require credentials or fail closed
+- Never dual-write. One authority per process.
 
-```bash
-pip install -r requirements.txt && pytest -q
-```
+## Rust risk boundary
+
+Governor sets policy; Rust enforces numerical integrity. Missing binary → NO NEW TRADE.
+
+## CI
+
+`.github/workflows/ci.yml` — pytest + cargo test + release smoke + integration cycle.
+
+## Secrets (never commit)
+
+`TURSO_DATABASE_URL`, `TURSO_AUTH_TOKEN`, `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`
 
 ## Limitations
 
-- Live IDX feed needs licensed endpoint (adapter ready)
-- Build Rust: `cd risk_engine && cargo build --release`
-- Corporate actions interface-only until real CA feed
-- Telegram requires secrets
+- Live IDX API requires licensed endpoint
+- Corporate actions: policy + file provider; no fabricated live CA stream
+- Telegram/Turso need credentials for live path
+- Synthetic OOS ≠ profitability proof
 
 ## License
 
-Original code. Concepts: meta-labeling, purged CV, outbox. No third-party source copied.
+Original implementation. Concepts: meta-labeling, purged CV, outbox. No third-party source copied.

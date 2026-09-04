@@ -68,14 +68,14 @@ def apply_embargo(
         return train_idx
     holdout_start = event_times.iloc[holdout_idx].min()
     if isinstance(embargo, int):
-        # bar-count embargo: drop last `embargo` training samples by time order
         order = np.argsort(event_times.iloc[train_idx].to_numpy())
         if len(order) <= embargo:
             return train_idx[:0]
         keep = order[:-embargo]
         return train_idx[keep]
     cutoff = holdout_start - embargo
-    mask = event_times.iloc[train_idx] <= cutoff
+    # strict: train times must be strictly before holdout_start - embargo
+    mask = event_times.iloc[train_idx] < cutoff
     return train_idx[mask.to_numpy()]
 
 def make_purged_split(

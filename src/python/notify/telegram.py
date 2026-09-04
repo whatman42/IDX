@@ -1,41 +1,39 @@
-"""Telegram notifications via outbox — never rolls back paper transactions."""
-
+"""Telegram notifications — Gemini advisory optional, deterministic ID fallback mandatory."""
 from __future__ import annotations
-
-import json
-import os
+import json, os
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Optional
-
 import httpx
-
+from src.python.advisory.gemini import GeminiAdvisor, is_high_value_event
+from src.python.advisory.templates_id import format_deterministic_id
 
 class NotifyEventType(str, Enum):
     BUY = "BUY"
+    NO_BUY = "NO_BUY"
     SELL = "SELL"
     TAKE_PROFIT = "TAKE_PROFIT"
     STOP_LOSS = "STOP_LOSS"
     TIME_EXIT = "TIME_EXIT"
+    PORTFOLIO = "PORTFOLIO"
+    GOVERNOR = "GOVERNOR"
+    TRAINING = "TRAINING"
     SYSTEM_ERROR = "SYSTEM_ERROR"
     DEGRADED_MODE = "DEGRADED_MODE"
+    HALT = "HALT"
     MODEL_PROMOTION = "MODEL_PROMOTION"
     MODEL_REJECTION = "MODEL_REJECTION"
     DAILY_REPORT = "DAILY_REPORT"
     WEEKLY_REPORT = "WEEKLY_REPORT"
 
-
 class NotificationProvider(ABC):
     @abstractmethod
-    def send(self, event_type: str, payload: dict[str, Any]) -> None:
-        ...
-
+    def send(self, event_type: str, payload: dict[str, Any]) -> None: ...
 
 class NullNotificationProvider(NotificationProvider):
     def send(self, event_type: str, payload: dict[str, Any]) -> None:
         return
-
 
 @dataclass
 class TelegramProvider(NotificationProvider):
@@ -57,34 +55,40 @@ class TelegramProvider(NotificationProvider):
         resp = httpx.post(url, json={"chat_id": self.chat_id, "text": text, "parse_mode": "HTML"}, timeout=self.timeout)
         resp.raise_for_status()
 
+def format_message(event_type: str, p: dict[str, Any], advisor: Optional[GeminiAdvisor] = None) -> str:
+    use_gemini = is_high_value_event(event_type) and advisor is not None and advisor.enabled
+    if use_gemini:
+        result = advisor.explain(event_type, p)
+        if result.ok:
+            why = "\n".join(f"- {w}" for w in result.why) if result.why else "-"
+            return (
+                f"<b>{result.title}</b>\n\n{result.summary}\n\n"
+                f"<b>Kenapa?</b>\n{why}\n\n"
+                f"<b>Risiko:</b>\n{result.risk_explanation}\n\n"
+                f"<b>Tindakan sistem:</b>\n{result.system_action}\n"
+                f"\n<i>Sumber: advisory (angka dari sistem deterministik)</i>"
+            )
+    body = format_deterministic_id(event_type, p)
+    return body.replace("<", "<").replace(">", ">")
 
-def format_message(event_type: str, p: dict[str, Any]) -> str:
-    if event_type == NotifyEventType.BUY.value:
-        return (
-            f"🟢 <b>IDX BUY</b>\nSymbol: <code>{p.get('symbol')}</code>\nEntry: {p.get('entry_price')}\n"
-            f"Qty: {p.get('qty')}\nSide: {p.get('side')}\nPrimary P: {p.get('primary_probability')}\n"
-            f"Meta P: {p.get('meta_probability')}\nConfidence: {p.get('confidence')}\n"
-            f"SL: {p.get('stop_loss')}  TP: {p.get('take_profit')}\nModel: {p.get('model_version')}\n"
-            f"Governor: {p.get('governor_version')}  Regime: {p.get('regime')}\n"
-            f"Equity: {p.get('equity')}  Cash: {p.get('cash')}\n"
-            f"Signal: <code>{p.get('signal_id')}</code>\nTx: <code>{p.get('tx_id')}</code>\nTime: {p.get('timestamp')}"
-        )
-    if event_type in (NotifyEventType.STOP_LOSS.value, NotifyEventType.TAKE_PROFIT.value):
-        return f"🔔 <b>IDX {event_type}</b>\n{json.dumps(p, default=str)[:800]}"
-    if event_type == NotifyEventType.SYSTEM_ERROR.value:
-        return f"🔴 <b>IDX ERROR</b>\n{p.get('message', p)}"
-    if event_type == NotifyEventType.DEGRADED_MODE.value:
-        return f"🟡 <b>IDX DEGRADED</b>\n{p.get('reason', p)}"
-    return f"IDX {event_type}\n{json.dumps(p, default=str)[:800]}"
-
-
-def drain_outbox(repo, provider: Optional[NotificationProvider], limit: int = 10) -> int:
+def drain_outbox(repo, provider: Optional[NotificationProvider], limit: int = 10,
+                 advisor: Optional[GeminiAdvisor] = None) -> int:
     if provider is None:
         provider = NullNotificationProvider()
     sent = 0
-    for item in repo.pending_notifications(limit=limit):
+    claim = getattr(repo, "claim_pending_notifications", None)
+    items = claim(limit=limit) if callable(claim) else repo.pending_notifications(limit=limit)
+    for item in items:
         try:
-            provider.send(item["event_type"], item["payload"])
+            payload = dict(item.get("payload") or {})
+            if isinstance(provider, TelegramProvider):
+                text = format_message(item["event_type"], payload, advisor=advisor)
+                url = f"https://api.telegram.org/bot{provider.bot_token}/sendMessage"
+                resp = httpx.post(url, json={"chat_id": provider.chat_id, "text": text, "parse_mode": "HTML"},
+                                  timeout=provider.timeout)
+                resp.raise_for_status()
+            else:
+                provider.send(item["event_type"], payload)
             repo.mark_notification(item["event_id"], "SENT")
             sent += 1
         except Exception as e:

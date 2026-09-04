@@ -26,7 +26,7 @@ from src.python.ml.primary_side import PrimarySideModel
 from src.python.ml.signal import generate_signals
 from src.python.notify.telegram import NotifyEventType, TelegramProvider, drain_outbox
 from src.python.observability.events import EventLog, EventType
-from src.python.persistence.repository import open_repository
+from src.python.persistence import open_repository
 from src.python.portfolio.engine import PortfolioEngine
 from src.python.portfolio.reconcile import reconcile
 from src.python.regime.detector import detect_regime
@@ -218,8 +218,8 @@ def main(
 
     if cfg.allow_new_trades and bool(sig_row["accepted"]) and risk.allow and mode in ("paper", "development", "test"):
         weight = float(sig_row["suggested_size"])
-        if risk.final_weight > 0:
-            weight = min(weight, risk.final_weight)
+        if abs(risk.final_weight) > 0:
+            weight = min(weight, abs(risk.final_weight))
         txn = portfolio.apply_buy(signal_id_=sid, symbol=sym, side=side, price=entry, weight=weight,
                                   stop_loss=sl, take_profit=tp, cycle_id=cycle_id, timestamp=log["timestamp"])
         if txn:

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 import shutil
 import subprocess
 from dataclasses import dataclass
@@ -30,15 +31,27 @@ def _validate_decision(d: dict) -> RiskDecision:
     if "allow" not in d or "reason" not in d:
         raise RustRiskError(f"Malformed risk decision: {d}")
     fw = float(d.get("final_weight", 0.0))
-    if fw != fw or fw < 0:
+    if fw != fw:  # NaN
         raise RustRiskError(f"Invalid final_weight: {fw}")
-    return RiskDecision(allow=bool(d["allow"]), reason=str(d["reason"]), final_weight=fw,
-                        kill_switch=bool(d.get("kill_switch", False)), raw=d)
+    if abs(fw) > 1.0:
+        raise RustRiskError(f"final_weight out of range: {fw}")
+    return RiskDecision(
+        allow=bool(d["allow"]),
+        reason=str(d["reason"]),
+        final_weight=fw,
+        kill_switch=bool(d.get("kill_switch", False)),
+        contract_version=str(d.get("contract_version", CONTRACT_VERSION)),
+        raw=d,
+    )
 
 
 def invoke_rust_risk(
-    signal: dict[str, Any], portfolio: dict[str, Any], *,
-    binary: Optional[str] = None, timeout_sec: float = 10.0, work_dir: Path | str = "/tmp",
+    signal: dict[str, Any],
+    portfolio: dict[str, Any],
+    *,
+    binary: Optional[str] = None,
+    timeout_sec: float = 10.0,
+    work_dir: Path | str = "/tmp",
 ) -> RiskDecision:
     work_dir = Path(work_dir)
     work_dir.mkdir(parents=True, exist_ok=True)
@@ -60,7 +73,8 @@ def invoke_rust_risk(
             return RiskDecision(allow=False, reason=f"NaN in signal.{k}", final_weight=0.0, kill_switch=True)
 
     rust_portfolio = {
-        "equity": float(portfolio.get("equity", 0)), "cash": float(portfolio.get("cash", 0)),
+        "equity": float(portfolio.get("equity", 0)),
+        "cash": float(portfolio.get("cash", 0)),
         "positions": portfolio.get("positions", {}),
         "daily_pnl_pct": float(portfolio.get("daily_pnl_pct", 0)),
         "max_drawdown_pct": float(portfolio.get("max_drawdown_pct", 0)),
@@ -73,23 +87,41 @@ def invoke_rust_risk(
 
     bin_path = binary or _find_binary()
     if not bin_path:
-        return RiskDecision(allow=False, reason="Rust risk binary not found — NO NEW TRADE (fail-closed)",
-                            final_weight=0.0, kill_switch=False)
+        return RiskDecision(
+            allow=False,
+            reason="Rust risk binary not found — NO NEW TRADE (fail-closed)",
+            final_weight=0.0,
+            kill_switch=False,
+        )
 
     try:
         proc = subprocess.run(
-            [bin_path, "--signal-file", str(signal_path), "--portfolio-file", str(portfolio_path),
-             "--output", str(output_path)],
-            capture_output=True, text=True, timeout=timeout_sec, check=False,
+            [
+                bin_path,
+                "--signal-file",
+                str(signal_path),
+                "--portfolio-file",
+                str(portfolio_path),
+                "--output",
+                str(output_path),
+            ],
+            capture_output=True,
+            text=True,
+            timeout=timeout_sec,
+            check=False,
         )
     except subprocess.TimeoutExpired:
         return RiskDecision(allow=False, reason="Rust risk timeout", final_weight=0.0, kill_switch=True)
     except Exception as e:
         return RiskDecision(allow=False, reason=f"Rust invoke error: {e}", final_weight=0.0, kill_switch=True)
 
-    if proc.returncode != 0:
-        return RiskDecision(allow=False, reason=f"Rust non-zero exit {proc.returncode}: {proc.stderr[:200]}",
-                            final_weight=0.0, kill_switch=True)
+    if proc.returncode != 0 and proc.returncode != 2:
+        return RiskDecision(
+            allow=False,
+            reason=f"Rust non-zero exit {proc.returncode}: {proc.stderr[:200]}",
+            final_weight=0.0,
+            kill_switch=True,
+        )
     if not output_path.exists():
         return RiskDecision(allow=False, reason="Rust produced no output file", final_weight=0.0, kill_switch=True)
     try:
@@ -99,7 +131,16 @@ def invoke_rust_risk(
 
 
 def _find_binary() -> Optional[str]:
-    for c in ["risk_engine/target/release/risk_engine", "risk_engine/target/debug/risk_engine", shutil.which("risk_engine")]:
+    env_bin = os.environ.get("IDX_RISK_BINARY")
+    candidates = [
+        env_bin,
+        "risk_engine/target/release/risk_engine",
+        "risk_engine/target/debug/risk_engine",
+        str(Path(__file__).resolve().parents[3] / "risk_engine" / "target" / "release" / "risk_engine"),
+        str(Path(__file__).resolve().parents[3] / "risk_engine" / "target" / "debug" / "risk_engine"),
+        shutil.which("risk_engine"),
+    ]
+    for c in candidates:
         if c and Path(c).exists():
             return str(c)
     return None

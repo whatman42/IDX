@@ -8,6 +8,14 @@ min_meta_proba = 0.55
 primary_model = "lightgbm"
 meta_model = "random_forest"
 calibration = "platt"
+side_threshold = 0.50
+meta_threshold = 0.55
+sizing_method = "sigmoid"
+kelly_fraction = 0.5
+train_frac = 0.60
+val_frac = 0.20
+test_frac = 0.20
+embargo_days = 5
 
 [execution]
 mode = "paper"

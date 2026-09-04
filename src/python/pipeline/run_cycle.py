@@ -55,7 +55,6 @@ def _synthetic_market(n: int = 80, seed: int = 42) -> pd.DataFrame:
 
 
 def _pdf_to_pl(df: pd.DataFrame) -> pl.DataFrame:
-    """Convert without pyarrow dependency."""
     data = {}
     for c in df.columns:
         s = df[c]
@@ -64,6 +63,10 @@ def _pdf_to_pl(df: pd.DataFrame) -> pl.DataFrame:
         else:
             data[c] = s.to_numpy().tolist()
     return pl.DataFrame(data)
+
+
+def _pl_to_pdf(df: pl.DataFrame) -> pd.DataFrame:
+    return pd.DataFrame({c: df[c].to_list() for c in df.columns})
 
 
 @app.command()
@@ -89,7 +92,7 @@ def main(mode: str = "paper", data_path: Optional[str] = None) -> None:
 
     feats_pl = compute_features(_pdf_to_pl(raw))
     ds = build_ml_dataset(feats_pl, drop_warmup=True)
-    X = ds["X"].to_pandas()
+    X = _pl_to_pdf(ds["X"])
     feature_cols = [c for c in ALL_FEATURE_COLUMNS if c in X.columns]
     Xf = X[feature_cols]
 

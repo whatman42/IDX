@@ -94,6 +94,12 @@ def economic_metrics_from_trades(trades, equity, *, initial_cash: float) -> dict
 def simulate_long_only(bars: pd.DataFrame, signals: pd.DataFrame, *, cost: Optional[CostModel] = None,
     initial_cash: float = 100_000_000.0, hold_bars: int = 5, lot_size: float = 100.0,
     max_position_pct: float = 0.10, cost_model_status: str = "UNVERIFIED") -> dict[str, Any]:
+    """Long-only sim with fill instrumentation (sizing behavior unchanged).
+
+    Fill classes when long signal at T for T+1 open execution:
+      FULL_FILL | SKIPPED_EXISTING_POSITION | SKIPPED_CASH | SKIPPED_OTHER_HARD_CONSTRAINT
+    Partial fills not produced (all-or-nothing lot grid).
+    """
     cost = cost or CostModel()
     fee_frac, slip_frac = cost.fee_bps / 10_000.0, cost.slippage_bps / 10_000.0
     bars = bars.copy(); bars["timestamp"] = pd.to_datetime(bars["timestamp"]); bars["symbol"] = bars["symbol"].astype(str)
@@ -104,6 +110,7 @@ def simulate_long_only(bars: pd.DataFrame, signals: pd.DataFrame, *, cost: Optio
     sig_map = {(r.symbol, pd.Timestamp(r.timestamp)): int(r.side) for r in sig.itertuples(index=False)}
     cash, fees_cum, realized = float(initial_cash), 0.0, 0.0
     trades: list = []; equity_curve: list = []; open_pos: dict = {}; trade_i = 0
+    fill_events: list = []
     all_dates = sorted(bars["timestamp"].unique())
     for dt in all_dates:
         for sym in list(open_pos.keys()):
@@ -125,7 +132,6 @@ def simulate_long_only(bars: pd.DataFrame, signals: pd.DataFrame, *, cost: Optio
                     _finite(net), int(bars_held), reason))
                 del open_pos[sym]
         for sym, g in by_sym.items():
-            if sym in open_pos: continue
             rows = g[g["timestamp"] == dt]
             if rows.empty: continue
             idx = g.index[g["timestamp"] == dt]
@@ -134,15 +140,38 @@ def simulate_long_only(bars: pd.DataFrame, signals: pd.DataFrame, *, cost: Optio
             if i == 0: continue
             prev = g.iloc[i - 1]
             if sig_map.get((sym, pd.Timestamp(prev["timestamp"])), 0) != 1: continue
+            cash_before = cash
             open_px = float(rows.iloc[0]["open"]); entry_px = open_px * (1.0 + slip_frac)
             budget = cash * max_position_pct
-            qty = float(int((budget / entry_px if entry_px > 0 else 0) / lot_size) * lot_size)
-            if qty < lot_size: continue
+            requested_qty = float(int((budget / entry_px if entry_px > 0 else 0) / lot_size) * lot_size)
+            requested_notional = requested_qty * entry_px if requested_qty > 0 else 0.0
+            if sym in open_pos:
+                fill_events.append({"signal_timestamp": str(prev["timestamp"]), "exec_timestamp": str(dt), "symbol": sym,
+                    "classification": "SKIPPED_EXISTING_POSITION", "cash_before": _finite(cash_before), "cash_after": _finite(cash),
+                    "requested_qty": _finite(requested_qty), "actual_qty": 0.0, "requested_notional": _finite(requested_notional),
+                    "actual_notional": 0.0, "existing_position": True, "reason": "symbol_already_open"})
+                continue
+            qty = requested_qty
+            if qty < lot_size:
+                fill_events.append({"signal_timestamp": str(prev["timestamp"]), "exec_timestamp": str(dt), "symbol": sym,
+                    "classification": "SKIPPED_CASH", "cash_before": _finite(cash_before), "cash_after": _finite(cash),
+                    "requested_qty": _finite(requested_qty), "actual_qty": 0.0, "requested_notional": _finite(requested_notional),
+                    "actual_notional": 0.0, "existing_position": False, "reason": "qty_below_lot_after_budget"})
+                continue
             notional = qty * entry_px; fee = notional * fee_frac
-            if notional + fee > cash: continue
+            if notional + fee > cash:
+                fill_events.append({"signal_timestamp": str(prev["timestamp"]), "exec_timestamp": str(dt), "symbol": sym,
+                    "classification": "SKIPPED_CASH", "cash_before": _finite(cash_before), "cash_after": _finite(cash),
+                    "requested_qty": _finite(requested_qty), "actual_qty": 0.0, "requested_notional": _finite(requested_notional),
+                    "actual_notional": 0.0, "existing_position": False, "reason": "notional_plus_fee_exceeds_cash"})
+                continue
             cash -= notional + fee; fees_cum += fee
             open_pos[sym] = {"entry_ts": dt, "entry_price": entry_px, "qty": qty, "bars_held": 0,
                              "entry_fee": fee, "entry_slip_cost": open_px * qty * slip_frac}
+            fill_events.append({"signal_timestamp": str(prev["timestamp"]), "exec_timestamp": str(dt), "symbol": sym,
+                "classification": "FULL_FILL", "cash_before": _finite(cash_before), "cash_after": _finite(cash),
+                "requested_qty": _finite(requested_qty), "actual_qty": _finite(qty), "requested_notional": _finite(requested_notional),
+                "actual_notional": _finite(notional), "existing_position": False, "reason": "filled_at_lot_grid"})
         mv = 0.0
         for sym, pos in open_pos.items():
             rows = by_sym[sym][by_sym[sym]["timestamp"] == dt]
@@ -156,5 +185,32 @@ def simulate_long_only(bars: pd.DataFrame, signals: pd.DataFrame, *, cost: Optio
     by_s: dict = {}
     for t in trades: by_s.setdefault(t.symbol, []).append(t.net_pnl)
     metrics["symbol_attribution"] = {s: {"trades": len(v), "net_pnl": _finite(sum(v)), "expectancy": _finite(float(np.mean(v)))} for s, v in by_s.items()}
+    if equity_curve:
+        cashs = np.array([e.cash for e in equity_curve], dtype=float)
+        mvs = np.array([e.market_value for e in equity_curve], dtype=float)
+        eqs = np.array([e.equity for e in equity_curve], dtype=float)
+        deployed = mvs
+        metrics["capital_utilization"] = {
+            "initial_cash": _finite(initial_cash),
+            "peak_deployed": _finite(float(deployed.max()) if len(deployed) else 0),
+            "average_deployed": _finite(float(deployed.mean()) if len(deployed) else 0),
+            "average_cash": _finite(float(cashs.mean())),
+            "minimum_cash": _finite(float(cashs.min())),
+            "max_exposure_pct": _finite(float((deployed / np.maximum(eqs, 1e-12)).max())) if len(eqs) else 0.0,
+            "average_exposure_pct": _finite(float((deployed / np.maximum(eqs, 1e-12)).mean())) if len(eqs) else 0.0,
+            "final_equity": _finite(float(eqs[-1])),
+            "negative_cash_points": int((cashs < -1e-6).sum()),
+        }
+    n_sig = len(fill_events)
+    def _cnt(c): return sum(1 for e in fill_events if e["classification"] == c)
+    metrics["signal_attrition"] = {
+        "raw_long_signals_seen": n_sig,
+        "FULL_FILL": _cnt("FULL_FILL"), "PARTIAL_FILL": _cnt("PARTIAL_FILL"),
+        "SKIPPED_CASH": _cnt("SKIPPED_CASH"), "SKIPPED_EXISTING_POSITION": _cnt("SKIPPED_EXISTING_POSITION"),
+        "SKIPPED_OTHER_HARD_CONSTRAINT": _cnt("SKIPPED_OTHER_HARD_CONSTRAINT"),
+        "pct_full_fill": _finite(_cnt("FULL_FILL") / n_sig) if n_sig else None,
+        "pct_skipped_cash": _finite(_cnt("SKIPPED_CASH") / n_sig) if n_sig else None,
+        "pct_skipped_existing": _finite(_cnt("SKIPPED_EXISTING_POSITION") / n_sig) if n_sig else None,
+    }
     return {"trades": [t.to_dict() for t in trades], "equity_curve": [e.to_dict() for e in equity_curve[-500:]],
-            "equity_curve_len": len(equity_curve), "metrics": metrics}
+            "equity_curve_len": len(equity_curve), "metrics": metrics, "fill_events": fill_events}
